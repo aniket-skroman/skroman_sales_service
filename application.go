@@ -2,10 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
+	"net/http"
 	"os"
 
+	"github.com/aniket-skroman/skroman_sales_service.git/apis"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/database"
+	"github.com/aniket-skroman/skroman_sales_service.git/apis/routers"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -20,7 +22,6 @@ func init() {
 		panic(err)
 	}
 	PORT = os.Getenv("PORT")
-	fmt.Println("ENV has been loaded..")
 }
 
 func init_routers() *gin.Engine {
@@ -28,8 +29,8 @@ func init_routers() *gin.Engine {
 	return router
 }
 
-func routing(route *gin.Engine) {
-
+func routing(route *gin.Engine, store *apis.Store) {
+	routers.SalesRouter(route, store)
 }
 
 func main() {
@@ -39,7 +40,19 @@ func main() {
 			panic(err)
 		}
 	}(db)
+
+	store := apis.NewStore(db)
+
 	router := init_routers()
-	routing(router)
+
+	router.GET("/", func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusSeeOther, "http://3.109.133.20:3000/")
+	})
+
+	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	http.Redirect(w, r, "http://3.109.133.20:3000/login", http.StatusSeeOther)
+	// })
+
+	routing(router, store)
 	router.Run(":" + PORT)
 }

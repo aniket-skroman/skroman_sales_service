@@ -1,0 +1,1 @@
+ALTER TABLE sale_leads ALTER COLUMN status SET DEFAULT 'INIT';

@@ -6,71 +6,43 @@ package db
 
 import (
 	"database/sql"
-	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-type ComplaintAllocations struct {
-	ID          uuid.UUID `json:"id"`
-	ComplaintID uuid.UUID `json:"complaint_id"`
-	AllocatedTo uuid.UUID `json:"allocated_to"`
-	AllocatedBy uuid.UUID `json:"allocated_by"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+type LeadInfo struct {
+	ID           uuid.UUID      `json:"id"`
+	LeadID       uuid.NullUUID  `json:"lead_id"`
+	Name         string         `json:"name"`
+	Email        sql.NullString `json:"email"`
+	Contact      string         `json:"contact"`
+	AddressLine1 sql.NullString `json:"address_line_1"`
+	City         sql.NullString `json:"city"`
+	State        sql.NullString `json:"state"`
+	LeadType     sql.NullString `json:"lead_type"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
-type ComplaintHistory struct {
-	ID                uuid.UUID       `json:"id"`
-	Complaint         json.RawMessage `json:"complaint"`
-	ComplaintInfo     json.RawMessage `json:"complaint_info"`
-	ComplaintAllocate json.RawMessage `json:"complaint_allocate"`
-	DeviceImages      json.RawMessage `json:"device_images"`
-	ComplaintProgress json.RawMessage `json:"complaint_progress"`
-	CreatedAt         time.Time       `json:"created_at"`
-	UpdatedAt         time.Time       `json:"updated_at"`
+type LeadOrder struct {
+	ID          uuid.UUID      `json:"id"`
+	LeadID      uuid.NullUUID  `json:"lead_id"`
+	DeviceType  sql.NullString `json:"device_type"`
+	DeviceModel sql.NullString `json:"device_model"`
+	DeviceName  sql.NullString `json:"device_name"`
+	DevicePrice sql.NullInt32  `json:"device_price"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
-type ComplaintInfo struct {
-	ID                      uuid.UUID      `json:"id"`
-	ComplaintID             uuid.UUID      `json:"complaint_id"`
-	DeviceID                string         `json:"device_id"`
-	ProblemStatement        string         `json:"problem_statement"`
-	ProblemCategory         sql.NullString `json:"problem_category"`
-	ClientAvailable         time.Time      `json:"client_available"`
-	Status                  string         `json:"status"`
-	CreatedAt               time.Time      `json:"created_at"`
-	UpdatedAt               time.Time      `json:"updated_at"`
-	DeviceType              sql.NullString `json:"device_type"`
-	DeviceModel             sql.NullString `json:"device_model"`
-	ClientAvailableDate     sql.NullTime   `json:"client_available_date"`
-	ClientAvailableTimeSlot sql.NullString `json:"client_available_time_slot"`
-	ComplaintAddress        sql.NullString `json:"complaint_address"`
-}
-
-type ComplaintProgress struct {
-	ID                uuid.UUID `json:"id"`
-	ComplaintID       uuid.UUID `json:"complaint_id"`
-	ProgressStatement string    `json:"progress_statement"`
-	StatementBy       uuid.UUID `json:"statement_by"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
-}
-
-type Complaints struct {
-	ID        uuid.UUID `json:"id"`
-	ClientID  string    `json:"client_id"`
-	CreatedBy uuid.UUID `json:"created_by"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type DeviceImages struct {
-	ID              uuid.UUID      `json:"id"`
-	ComplaintInfoID uuid.UUID      `json:"complaint_info_id"`
-	DeviceImage     string         `json:"device_image"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
-	FileType        sql.NullString `json:"file_type"`
+type SaleLeads struct {
+	ID             uuid.UUID     `json:"id"`
+	LeadBy         uuid.UUID     `json:"lead_by"`
+	ReferalName    string        `json:"referal_name"`
+	ReferalContact string        `json:"referal_contact"`
+	Status         string        `json:"status"`
+	QuatationCount sql.NullInt32 `json:"quatation_count"`
+	CreatedAt      time.Time     `json:"created_at"`
+	UpdatedAt      time.Time     `json:"updated_at"`
 }

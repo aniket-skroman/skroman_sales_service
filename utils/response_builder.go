@@ -42,7 +42,7 @@ func RequestParamsMissingResponse(err interface{}) map[string]interface{} {
 	response["status"] = false
 	response["message"] = FAILED_PROCESS
 	response["error"] = err
-	response[COMPLAINT_DATA] = EmptyObj{}
+	response[SALES_LEAD] = EmptyObj{}
 
 	return response
 }
@@ -52,7 +52,6 @@ func BuildSuccessResponse(msg, data_name string, data interface{}) map[string]in
 }
 
 func BuildFailedResponse(err string) map[string]interface{} {
-	var data interface{}
-	data = EmptyObj{}
-	return response_builder(false, &FAILED_PROCESS, &err, &COMPLAINT_DATA, &data, false)
+	var data interface{} = EmptyObj{}
+	return response_builder(false, &FAILED_PROCESS, &err, &SALES_LEAD, &data, false)
 }
