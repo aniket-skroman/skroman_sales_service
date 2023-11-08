@@ -24,3 +24,16 @@ update sale_leads
 set quatation_count = quatation_count + 1,
 updated_at = CURRENT_TIMESTAMP
 where id = $1;
+
+/* fetch all leads */
+-- name: FetchAllLeads :many
+select * from sale_leads
+order by created_at desc
+limit $1
+offset $2;
+
+/* fetch lead by id */
+-- name: FetchLeadByLeadId :one
+select * from sale_leads
+where id = $1
+limit 1;

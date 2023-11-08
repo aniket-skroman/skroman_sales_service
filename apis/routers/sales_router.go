@@ -25,6 +25,8 @@ func SalesRouter(router *gin.Engine, store *apis.Store) {
 	sales_lead := router.Group("/api", middleware.AuthorizeJWT(jwt_servive))
 	{
 		sales_lead.POST("/sales-lead", sales_controller.CreateNewLead)
+		sales_lead.GET("/sales-lead/:lead_id", sales_controller.FetchLeadByLeadId)
+		sales_lead.GET("/sales-leads/:page_id/:page_size", sales_controller.FetchAllLeads)
 	}
 
 }

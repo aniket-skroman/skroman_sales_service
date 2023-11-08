@@ -25,3 +25,17 @@ func (repo *sale_repo) IncreaseQuatationCount(lead_id uuid.UUID) (int64, error) 
 
 	return repo.db.Queries.IncreaeQuatationCount(ctx, lead_id)
 }
+
+func (repo *sale_repo) FetchAllLeads(args db.FetchAllLeadsParams) ([]db.SaleLeads, error) {
+	ctx, cancel := repo.Init()
+	defer cancel()
+
+	return repo.db.Queries.FetchAllLeads(ctx, args)
+}
+
+func (repo *sale_repo) FetchLeadByLeadId(lead_id uuid.UUID) (db.SaleLeads, error) {
+	ctx, cancel := repo.Init()
+	defer cancel()
+
+	return repo.db.Queries.FetchLeadByLeadId(ctx, lead_id)
+}

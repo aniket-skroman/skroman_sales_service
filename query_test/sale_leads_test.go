@@ -94,6 +94,55 @@ func TestIncreaseQuataionCount(t *testing.T) {
 	}
 }
 
+func TestFetchAllLeads(t *testing.T) {
+	args := db.FetchAllLeadsParams{
+		Limit:  10,
+		Offset: 1,
+	}
+
+	leads, err := testQueries.FetchAllLeads(context.Background(), args)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, leads)
+}
+
+func TestFetchLeadById(t *testing.T) {
+
+	args := []struct {
+		TestName    string
+		LeadId      string
+		ExpectedErr bool
+	}{
+		{
+			TestName:    "First Test",
+			LeadId:      "dhbvvfdvf",
+			ExpectedErr: true,
+		},
+		{
+			TestName:    "Second Test",
+			LeadId:      "de7d4ef9-267b-45c7-88fe-5b3ca0b8c5ce",
+			ExpectedErr: false,
+		},
+	}
+
+	for i := range args {
+		t.Run(args[i].TestName, func(t *testing.T) {
+			u_id, _ := uuid.Parse(args[i].LeadId)
+			lead, err := testQueries.FetchLeadByLeadId(context.Background(), u_id)
+
+			if !args[i].ExpectedErr {
+				require.NoError(t, err)
+				require.NotEmpty(t, lead)
+			} else {
+				require.Error(t, err)
+				require.Empty(t, lead)
+			}
+
+		})
+	}
+
+}
+
 func print(args ...interface{}) {
 	fmt.Println("DEBUG : ", args)
 }

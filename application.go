@@ -2,19 +2,37 @@ package main
 
 import (
 	"database/sql"
-	"net/http"
 	"os"
 
 	"github.com/aniket-skroman/skroman_sales_service.git/apis"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/database"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/routers"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+
 	_ "github.com/lib/pq"
 )
 
 var (
 	PORT = ""
+)
+
+func CORSConfig() cors.Config {
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{"http://localhost:3000", "http://3.109.133.20:3000"}
+	corsConfig.AllowCredentials = true
+	corsConfig.AddAllowHeaders("Access-Control-Allow-Headers", "access-control-allow-origin, access-control-allow-headers", "Content-Type", "X-XSRF-TOKEN", "Accept", "Origin", "X-Requested-With", "Authorization")
+	corsConfig.AddAllowMethods("GET", "POST", "PUT", "DELETE")
+	return corsConfig
+}
+
+const (
+	ContentTypeBinary = "application/octet-stream"
+	ContentTypeForm   = "application/x-www-form-urlencoded"
+	ContentTypeJSON   = "application/json"
+	ContentTypeHTML   = "text/html; charset=utf-8"
+	ContentTypeText   = "text/plain; charset=utf-8"
 )
 
 func init() {
@@ -26,6 +44,7 @@ func init() {
 
 func init_routers() *gin.Engine {
 	router := gin.Default()
+	router.Use(cors.New(CORSConfig()))
 	return router
 }
 
@@ -42,16 +61,7 @@ func main() {
 	}(db)
 
 	store := apis.NewStore(db)
-
 	router := init_routers()
-
-	router.GET("/", func(ctx *gin.Context) {
-		ctx.Redirect(http.StatusSeeOther, "http://3.109.133.20:3000/")
-	})
-
-	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	// 	http.Redirect(w, r, "http://3.109.133.20:3000/login", http.StatusSeeOther)
-	// })
 
 	routing(router, store)
 	router.Run(":" + PORT)

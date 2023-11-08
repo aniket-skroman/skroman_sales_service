@@ -54,6 +54,74 @@ func (q *Queries) CreateNewLead(ctx context.Context, arg CreateNewLeadParams) (S
 	return i, err
 }
 
+const fetchAllLeads = `-- name: FetchAllLeads :many
+select id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at from sale_leads
+order by created_at desc
+limit $1
+offset $2
+`
+
+type FetchAllLeadsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+// fetch all leads
+func (q *Queries) FetchAllLeads(ctx context.Context, arg FetchAllLeadsParams) ([]SaleLeads, error) {
+	rows, err := q.db.QueryContext(ctx, fetchAllLeads, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SaleLeads{}
+	for rows.Next() {
+		var i SaleLeads
+		if err := rows.Scan(
+			&i.ID,
+			&i.LeadBy,
+			&i.ReferalName,
+			&i.ReferalContact,
+			&i.Status,
+			&i.QuatationCount,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchLeadByLeadId = `-- name: FetchLeadByLeadId :one
+select id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at from sale_leads
+where id = $1
+limit 1
+`
+
+// fetch lead by id
+func (q *Queries) FetchLeadByLeadId(ctx context.Context, id uuid.UUID) (SaleLeads, error) {
+	row := q.db.QueryRowContext(ctx, fetchLeadByLeadId, id)
+	var i SaleLeads
+	err := row.Scan(
+		&i.ID,
+		&i.LeadBy,
+		&i.ReferalName,
+		&i.ReferalContact,
+		&i.Status,
+		&i.QuatationCount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const increaeQuatationCount = `-- name: IncreaeQuatationCount :execrows
 update sale_leads
 set quatation_count = quatation_count + 1,

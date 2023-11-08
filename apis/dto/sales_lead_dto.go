@@ -7,3 +7,8 @@ type CreateNewLeadDTO struct {
 	Status         string `json:"status"`
 	QuatationCount int    `json:"quatation_count"`
 }
+
+type FetchAllLeadsRequestDTO struct {
+	PageId   int `uri:"page_id"`
+	PageSize int `uri:"page_size"`
+}
