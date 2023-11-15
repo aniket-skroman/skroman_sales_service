@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/aniket-skroman/skroman_support_installation/apis/services"
-	"github.com/aniket-skroman/skroman_support_installation/utils"
+	"github.com/aniket-skroman/skroman_sales_service.git/apis/services"
+	"github.com/aniket-skroman/skroman_sales_service.git/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )

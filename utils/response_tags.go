@@ -42,7 +42,7 @@ var USER_TYPE = ""
 // DATA --------------- Response Key Words ------------//
 const DATA = "app_data"
 
-var COMPLAINT_DATA = "complaint_data"
+var SALES_LEAD = "lead_data"
 
 // ---------------------------- COMPLAINTS --------------------------------- //
 const COMPLAINT_CREATED = "complaint has been created"

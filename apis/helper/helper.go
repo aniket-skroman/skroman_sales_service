@@ -3,11 +3,20 @@ package helper
 import (
 	"errors"
 	"fmt"
+	"strings"
 
-	"github.com/aniket-skroman/skroman_support_installation/utils"
+	"github.com/aniket-skroman/skroman_sales_service.git/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
+
+var ERR_INVALID_ID error
+var ERR_REQUIRED_PARAMS error
+
+func init() {
+	ERR_INVALID_ID = errors.New("invalid id found")
+	ERR_REQUIRED_PARAMS = errors.New("please provide a required params")
+}
 
 func SetPaginationData(page int, total int64) {
 	if page == 0 {
@@ -52,6 +61,15 @@ func Handle_required_param_error(err error) string {
 			err_msg = fmt.Sprintf("%v - %v", fe.Field(), msgForTag(fe.Tag()))
 			break
 		}
+	} else {
+		if strings.Contains(err.Error(), "cannot unmarshal string into") {
+			err_msg = "required a integer but found string, please check params"
+		} else if strings.Contains(err.Error(), "cannot unmarshal number into") {
+			err_msg = "required a string but found integer, please check params"
+		} else {
+			err_msg = "something went's wrong, invalid param detecte"
+
+		}
 	}
 
 	return err_msg
@@ -63,6 +81,8 @@ func msgForTag(tag string) string {
 		return "This field is required"
 	case "email":
 		return "Invalid email"
+	case "min":
+		return "Invalid length for param"
 	}
 	return ""
 }

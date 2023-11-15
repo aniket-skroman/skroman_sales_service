@@ -3,12 +3,12 @@ package apis
 import (
 	"database/sql"
 
-	db "github.com/aniket-skroman/skroman_support_installation/sqlc_lib"
+	db "github.com/aniket-skroman/skroman_sales_service.git/sqlc_lib"
 )
 
 type Store struct {
-	*db.Queries
 	db *sql.DB
+	*db.Queries
 }
 
 func NewStore(dbs *sql.DB) *Store {
@@ -18,6 +18,6 @@ func NewStore(dbs *sql.DB) *Store {
 	}
 }
 
-func (s *Store) DB_instatnce() *sql.DB {
-	return s.db
+func (s *Store) DBTransaction() (*sql.Tx, error) {
+	return s.db.Begin()
 }
