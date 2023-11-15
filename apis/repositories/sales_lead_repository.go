@@ -16,6 +16,7 @@ type SalesRepository interface {
 	IncreaseQuatationCount(lead_id uuid.UUID) (int64, error)
 	FetchAllLeads(args db.FetchAllLeadsParams) ([]db.SaleLeads, error)
 	FetchLeadByLeadId(lead_id uuid.UUID) (db.SaleLeads, error)
+	IncreaeQuatationCount(lead_id uuid.UUID) (int64, error)
 }
 
 type sale_repo struct {

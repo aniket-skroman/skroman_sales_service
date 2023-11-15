@@ -89,6 +89,10 @@ func (cont *sale_controller) FetchLeadByLeadId(ctx *gin.Context) {
 			cont.response = utils.BuildFailedResponse("lead not found")
 			ctx.JSON(http.StatusNotFound, cont.response)
 			return
+		} else if errors.Is(err, helper.ERR_INVALID_ID) {
+			cont.response = utils.BuildFailedResponse(helper.ERR_INVALID_ID.Error())
+			ctx.JSON(http.StatusBadRequest, cont.response)
+			return
 		}
 		cont.response = utils.BuildFailedResponse(err.Error())
 		ctx.JSON(http.StatusInternalServerError, cont.response)
@@ -96,5 +100,30 @@ func (cont *sale_controller) FetchLeadByLeadId(ctx *gin.Context) {
 	}
 
 	cont.response = utils.BuildSuccessResponse(utils.FETCHED_SUCCESS, utils.SALES_LEAD, lead)
+	ctx.JSON(http.StatusOK, cont.response)
+}
+
+func (cont *sale_controller) IncreaeQuatationCount(ctx *gin.Context) {
+	lead_id := ctx.Param("lead_id")
+
+	if lead_id == "" {
+		cont.response = utils.BuildFailedResponse(helper.ERR_REQUIRED_PARAMS.Error())
+		ctx.JSON(http.StatusBadRequest, cont.response)
+		return
+	}
+
+	err := cont.sale_serv.IncreaeQuatationCount(lead_id)
+
+	if err != nil {
+		if errors.Is(err, helper.ERR_INVALID_ID) {
+			cont.response = utils.BuildFailedResponse(helper.ERR_INVALID_ID.Error())
+			ctx.JSON(http.StatusForbidden, cont.response)
+			return
+		}
+		cont.response = utils.BuildFailedResponse(err.Error())
+		ctx.JSON(http.StatusInternalServerError, cont.response)
+		return
+	}
+	cont.response = utils.BuildSuccessResponse("quatation count has been increased", utils.SALES_LEAD, utils.EmptyObj{})
 	ctx.JSON(http.StatusOK, cont.response)
 }

@@ -83,12 +83,12 @@ func TestIncreaseQuataionCount(t *testing.T) {
 
 	for i := range args {
 		t.Run(args[i].TestName, func(t *testing.T) {
-			_, err := testQueries.IncreaeQuatationCount(context.Background(), args[i].LeadId)
+			result, err := testQueries.IncreaeQuatationCount(context.Background(), args[i].LeadId)
 
 			if !args[i].ExpectedErr {
 				require.NoError(t, err)
 			}
-			print("Error : ", err)
+			print("Result : ", result, " For Test : ", args[i].ExpectedErr)
 			//print("result for test :  ", args[i].TestName, " and result is : ", result)
 		})
 	}

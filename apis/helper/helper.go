@@ -10,6 +10,14 @@ import (
 	"github.com/google/uuid"
 )
 
+var ERR_INVALID_ID error
+var ERR_REQUIRED_PARAMS error
+
+func init() {
+	ERR_INVALID_ID = errors.New("invalid id found")
+	ERR_REQUIRED_PARAMS = errors.New("please provide a required params")
+}
+
 func SetPaginationData(page int, total int64) {
 	if page == 0 {
 		utils.PREVIOUS_IDX = 0
@@ -73,6 +81,8 @@ func msgForTag(tag string) string {
 		return "This field is required"
 	case "email":
 		return "Invalid email"
+	case "min":
+		return "Invalid length for param"
 	}
 	return ""
 }

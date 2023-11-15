@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/dto"
+	"github.com/aniket-skroman/skroman_sales_service.git/apis/helper"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/repositories"
 	db "github.com/aniket-skroman/skroman_sales_service.git/sqlc_lib"
 	"github.com/google/uuid"
@@ -15,8 +16,9 @@ import (
 
 type SalesLeadService interface {
 	CreateNewLead(req dto.CreateNewLeadDTO) (db.SaleLeads, error)
-	FetchAllLeads(req dto.FetchAllLeadsRequestDTO) ([]db.SaleLeads, error)
-	FetchLeadByLeadId(lead_id string) (db.SaleLeads, error)
+	FetchAllLeads(req dto.FetchAllLeadsRequestDTO) (interface{}, error)
+	FetchLeadByLeadId(lead_id string) (dto.SaleLeadsDTO, error)
+	IncreaeQuatationCount(lead_id string) error
 }
 
 type sale_service struct {
@@ -54,7 +56,7 @@ func (ser *sale_service) CreateNewLead(req dto.CreateNewLeadDTO) (db.SaleLeads, 
 	fmt.Println("Error from serv : ", err)
 	return new_lead, err
 }
-func (ser *sale_service) FetchAllLeads(req dto.FetchAllLeadsRequestDTO) ([]db.SaleLeads, error) {
+func (ser *sale_service) FetchAllLeads(req dto.FetchAllLeadsRequestDTO) (interface{}, error) {
 
 	args := db.FetchAllLeadsParams{
 		Limit:  int32(req.PageSize),
@@ -70,25 +72,52 @@ func (ser *sale_service) FetchAllLeads(req dto.FetchAllLeadsRequestDTO) ([]db.Sa
 		return nil, sql.ErrNoRows
 	}
 
-	return result, nil
+	data := new(dto.SaleLeadsDTO).MakeSaleLeadsDTO(result...)
+	if _, ok := data.(dto.SaleLeadsDTO); ok {
+		return []dto.SaleLeadsDTO{data.(dto.SaleLeadsDTO)}, nil
+	}
+
+	return data, nil
 }
 
-func (ser *sale_service) FetchLeadByLeadId(lead_id string) (db.SaleLeads, error) {
+func (ser *sale_service) FetchLeadByLeadId(lead_id string) (dto.SaleLeadsDTO, error) {
 	lead_obj_id, err := uuid.Parse(lead_id)
 
 	if err != nil {
-		return db.SaleLeads{}, err
+		return dto.SaleLeadsDTO{}, helper.ERR_INVALID_ID
 	}
 
 	lead, err := ser.sale_lead_repo.FetchLeadByLeadId(lead_obj_id)
 
 	if err != nil {
-		return db.SaleLeads{}, err
+		return dto.SaleLeadsDTO{}, err
 	}
 
 	if (reflect.DeepEqual(lead, db.SaleLeads{})) {
-		return db.SaleLeads{}, errors.New("lead not found")
+		return dto.SaleLeadsDTO{}, errors.New("lead not found")
 	}
 
-	return lead, nil
+	data := new(dto.SaleLeadsDTO).MakeSaleLeadsDTO(lead)
+
+	return data.(dto.SaleLeadsDTO), nil
+}
+
+func (ser *sale_service) IncreaeQuatationCount(lead_id string) error {
+	lead_obj_id, err := uuid.Parse(lead_id)
+
+	if err != nil {
+		return helper.ERR_INVALID_ID
+	}
+
+	result, err := ser.sale_lead_repo.IncreaeQuatationCount(lead_obj_id)
+
+	if err != nil {
+		return err
+	}
+
+	if result == 0 {
+		return errors.New("failed to increase a quatation count")
+	}
+
+	return nil
 }
