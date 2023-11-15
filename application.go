@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"log"
 	"os"
 
 	"github.com/aniket-skroman/skroman_sales_service.git/apis"
@@ -57,7 +58,7 @@ func main() {
 	db := database.DB_Instance
 	defer func(db *sql.DB) {
 		if err := database.CloseDB(db); err != nil {
-			panic(err)
+			log.Fatal("connection closed issued : ", err)
 		}
 	}(db)
 
