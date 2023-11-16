@@ -45,4 +45,6 @@ type SaleLeads struct {
 	QuatationCount sql.NullInt32 `json:"quatation_count"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
+	IsLeadInfo     sql.NullBool  `json:"is_lead_info"`
+	IsOrderInfo    sql.NullBool  `json:"is_order_info"`
 }

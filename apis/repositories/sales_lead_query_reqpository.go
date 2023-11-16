@@ -45,5 +45,4 @@ func (repo *sale_repo) IncreaeQuatationCount(lead_id uuid.UUID) (int64, error) {
 	defer cancel()
 
 	return repo.db.Queries.IncreaeQuatationCount(ctx, lead_id)
-
 }

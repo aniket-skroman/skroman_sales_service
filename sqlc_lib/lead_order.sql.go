@@ -12,6 +12,19 @@ import (
 	"github.com/google/uuid"
 )
 
+const checkLeadHasOrder = `-- name: CheckLeadHasOrder :one
+select count(*) from lead_order
+where lead_id = $1
+`
+
+// check is there any order or all order get deleted
+func (q *Queries) CheckLeadHasOrder(ctx context.Context, leadID uuid.NullUUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, checkLeadHasOrder, leadID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createLeadOrder = `-- name: CreateLeadOrder :one
 insert into lead_order (
     lead_id,

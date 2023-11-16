@@ -37,3 +37,16 @@ offset $2;
 select * from sale_leads
 where id = $1
 limit 1;
+
+/* make a flags true or false for info or orde */
+-- name: UpdateIsLeadInfo :one
+update sale_leads
+set is_lead_info = $2
+where id = $1
+returning *;
+
+-- name: UpdateIsLeadOrder :one
+update sale_leads
+set is_order_info = $2
+where id = $1
+returning *;

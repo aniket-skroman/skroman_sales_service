@@ -73,7 +73,13 @@ func (serv *lead_order_serv) FetchOrdersByLeadId(lead_id string) ([]dto.LeadOrde
 		return nil, sql.ErrNoRows
 	}
 
-	return new(dto.LeadOrderDTO).MakeLeadOrderDTO(orders...).([]dto.LeadOrderDTO), nil
+	result := new(dto.LeadOrderDTO).MakeLeadOrderDTO(orders...)
+	if data, ok := result.(dto.LeadOrderDTO); ok {
+		return []dto.LeadOrderDTO{data}, nil
+	}
+
+	return result.([]dto.LeadOrderDTO), nil
+
 }
 
 func (serv *lead_order_serv) DeleteLeadOrder(req dto.DeleteLeadOrderRequestDTO) error {

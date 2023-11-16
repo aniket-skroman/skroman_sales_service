@@ -21,7 +21,7 @@ insert into sale_leads (
     quatation_count
 ) values (
     $1,$2,$3,$4,$5
-) returning id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at
+) returning id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at, is_lead_info, is_order_info
 `
 
 type CreateNewLeadParams struct {
@@ -50,12 +50,14 @@ func (q *Queries) CreateNewLead(ctx context.Context, arg CreateNewLeadParams) (S
 		&i.QuatationCount,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.IsLeadInfo,
+		&i.IsOrderInfo,
 	)
 	return i, err
 }
 
 const fetchAllLeads = `-- name: FetchAllLeads :many
-select id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at from sale_leads
+select id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at, is_lead_info, is_order_info from sale_leads
 order by created_at desc
 limit $1
 offset $2
@@ -85,6 +87,8 @@ func (q *Queries) FetchAllLeads(ctx context.Context, arg FetchAllLeadsParams) ([
 			&i.QuatationCount,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.IsLeadInfo,
+			&i.IsOrderInfo,
 		); err != nil {
 			return nil, err
 		}
@@ -100,7 +104,7 @@ func (q *Queries) FetchAllLeads(ctx context.Context, arg FetchAllLeadsParams) ([
 }
 
 const fetchLeadByLeadId = `-- name: FetchLeadByLeadId :one
-select id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at from sale_leads
+select id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at, is_lead_info, is_order_info from sale_leads
 where id = $1
 limit 1
 `
@@ -118,6 +122,8 @@ func (q *Queries) FetchLeadByLeadId(ctx context.Context, id uuid.UUID) (SaleLead
 		&i.QuatationCount,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.IsLeadInfo,
+		&i.IsOrderInfo,
 	)
 	return i, err
 }
@@ -138,13 +144,74 @@ func (q *Queries) IncreaeQuatationCount(ctx context.Context, id uuid.UUID) (int6
 	return result.RowsAffected()
 }
 
+const updateIsLeadInfo = `-- name: UpdateIsLeadInfo :one
+update sale_leads
+set is_lead_info = $2
+where id = $1
+returning id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at, is_lead_info, is_order_info
+`
+
+type UpdateIsLeadInfoParams struct {
+	ID         uuid.UUID    `json:"id"`
+	IsLeadInfo sql.NullBool `json:"is_lead_info"`
+}
+
+// make a flags true or false for info or orde
+func (q *Queries) UpdateIsLeadInfo(ctx context.Context, arg UpdateIsLeadInfoParams) (SaleLeads, error) {
+	row := q.db.QueryRowContext(ctx, updateIsLeadInfo, arg.ID, arg.IsLeadInfo)
+	var i SaleLeads
+	err := row.Scan(
+		&i.ID,
+		&i.LeadBy,
+		&i.ReferalName,
+		&i.ReferalContact,
+		&i.Status,
+		&i.QuatationCount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsLeadInfo,
+		&i.IsOrderInfo,
+	)
+	return i, err
+}
+
+const updateIsLeadOrder = `-- name: UpdateIsLeadOrder :one
+update sale_leads
+set is_order_info = $2
+where id = $1
+returning id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at, is_lead_info, is_order_info
+`
+
+type UpdateIsLeadOrderParams struct {
+	ID          uuid.UUID    `json:"id"`
+	IsOrderInfo sql.NullBool `json:"is_order_info"`
+}
+
+func (q *Queries) UpdateIsLeadOrder(ctx context.Context, arg UpdateIsLeadOrderParams) (SaleLeads, error) {
+	row := q.db.QueryRowContext(ctx, updateIsLeadOrder, arg.ID, arg.IsOrderInfo)
+	var i SaleLeads
+	err := row.Scan(
+		&i.ID,
+		&i.LeadBy,
+		&i.ReferalName,
+		&i.ReferalContact,
+		&i.Status,
+		&i.QuatationCount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsLeadInfo,
+		&i.IsOrderInfo,
+	)
+	return i, err
+}
+
 const updateSaleLeadReferal = `-- name: UpdateSaleLeadReferal :one
 update sale_leads
 set referal_name = $2,
 referal_contact = $3,
 updated_at = CURRENT_TIMESTAMP
 where id = $1
-returning id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at
+returning id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at, is_lead_info, is_order_info
 `
 
 type UpdateSaleLeadReferalParams struct {
@@ -166,6 +233,8 @@ func (q *Queries) UpdateSaleLeadReferal(ctx context.Context, arg UpdateSaleLeadR
 		&i.QuatationCount,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.IsLeadInfo,
+		&i.IsOrderInfo,
 	)
 	return i, err
 }

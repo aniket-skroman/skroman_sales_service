@@ -52,6 +52,7 @@ func (ser *sale_service) CreateNewLead(req dto.CreateNewLeadDTO) (db.SaleLeads, 
 	}
 
 	new_lead, err := ser.sale_lead_repo.CreateSalesLead(args)
+
 	return new_lead, err
 }
 func (ser *sale_service) FetchAllLeads(req dto.FetchAllLeadsRequestDTO) (interface{}, error) {

@@ -29,6 +29,8 @@ type SaleLeadsDTO struct {
 	QuatationCount int32     `json:"quatation_count"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
+	IsLeadInfo     bool      `json:"is_lead_info"`
+	IsOrderInfo    bool      `json:"is_order_info"`
 }
 
 func (sale *SaleLeadsDTO) MakeSaleLeadsDTO(modeule_data ...db.SaleLeads) interface{} {
@@ -42,6 +44,8 @@ func (sale *SaleLeadsDTO) MakeSaleLeadsDTO(modeule_data ...db.SaleLeads) interfa
 			QuatationCount: modeule_data[0].QuatationCount.Int32,
 			CreatedAt:      modeule_data[0].CreatedAt,
 			UpdatedAt:      modeule_data[0].UpdatedAt,
+			IsLeadInfo:     modeule_data[0].IsLeadInfo.Bool,
+			IsOrderInfo:    modeule_data[0].IsOrderInfo.Bool,
 		}
 	}
 	sales_leads := make([]SaleLeadsDTO, len(modeule_data))
@@ -56,6 +60,8 @@ func (sale *SaleLeadsDTO) MakeSaleLeadsDTO(modeule_data ...db.SaleLeads) interfa
 			QuatationCount: modeule_data[i].QuatationCount.Int32,
 			CreatedAt:      modeule_data[i].CreatedAt,
 			UpdatedAt:      modeule_data[i].UpdatedAt,
+			IsLeadInfo:     modeule_data[i].IsLeadInfo.Bool,
+			IsOrderInfo:    modeule_data[i].IsOrderInfo.Bool,
 		}
 	}
 	return sales_leads

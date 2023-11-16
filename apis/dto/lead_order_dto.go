@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"fmt"
 	"time"
 
 	db "github.com/aniket-skroman/skroman_sales_service.git/sqlc_lib"
@@ -41,7 +42,7 @@ type LeadOrderDTO struct {
 func (order *LeadOrderDTO) MakeLeadOrderDTO(module_data ...db.LeadOrder) interface{} {
 	if len(module_data) == 1 {
 		return LeadOrderDTO{
-			ID:          module_data[0].LeadID.UUID,
+			ID:          module_data[0].ID,
 			LeadID:      module_data[0].LeadID,
 			DeviceType:  module_data[0].DeviceType.String,
 			DeviceModel: module_data[0].DeviceModel.String,
@@ -56,7 +57,7 @@ func (order *LeadOrderDTO) MakeLeadOrderDTO(module_data ...db.LeadOrder) interfa
 
 	for i := range module_data {
 		orders[i] = LeadOrderDTO{
-			ID:          module_data[i].LeadID.UUID,
+			ID:          module_data[i].ID,
 			LeadID:      module_data[i].LeadID,
 			DeviceType:  module_data[i].DeviceType.String,
 			DeviceModel: module_data[i].DeviceModel.String,
@@ -66,6 +67,6 @@ func (order *LeadOrderDTO) MakeLeadOrderDTO(module_data ...db.LeadOrder) interfa
 			UpdatedAt:   module_data[i].UpdatedAt,
 		}
 	}
-
+	fmt.Println("Returning orders....")
 	return orders
 }

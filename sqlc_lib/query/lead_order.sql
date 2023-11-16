@@ -38,3 +38,8 @@ select * from lead_order
 where id = $1
 limit 1
 ;
+
+/* check is there any order or all order get deleted */
+-- name: CheckLeadHasOrder :one
+select count(*) from lead_order
+where lead_id = $1;
