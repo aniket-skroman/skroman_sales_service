@@ -22,10 +22,9 @@ func Handle_db_err(err error) (err_ error) {
 			// unique constraint violation
 			if strings.Contains(e.Message, "lead_info_lead_id_key") {
 				fmt.Println("Returning MSG from : ")
-				err_ = errors.New("lead info already exists for current lead")
+				err_ = Err_Lead_Exists
 				return
 			}
-			fmt.Println("Error MSG : ", e.Message)
 			err_ = errors.New(e.Detail)
 			return
 

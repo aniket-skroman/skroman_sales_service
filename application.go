@@ -52,6 +52,7 @@ func init_routers() *gin.Engine {
 func routing(route *gin.Engine, store *apis.Store) {
 	routers.SalesRouter(route, store)
 	routers.LeadInfoRouter(route, store)
+	routers.LeadOrderRouter(route, store)
 }
 
 func main() {

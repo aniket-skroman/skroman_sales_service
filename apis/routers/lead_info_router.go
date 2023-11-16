@@ -23,5 +23,8 @@ func LeadInfoRouter(router *gin.Engine, api *apis.Store) {
 	lead := router.Group("/api", middleware.AuthorizeJWT(jwt_servive))
 	{
 		lead.POST("/lead_info", lead_info_cont.CreateLeadInfo)
+		lead.GET("/lead_info/:lead_id", lead_info_cont.FetchLeadInfoByLeadID)
+		lead.PUT("/lead_info/:lead_id", lead_info_cont.UpdateLeadInfo)
+		lead.DELETE("/lead_info/:lead_id", lead_info_cont.DeleteLeadInfo)
 	}
 }
