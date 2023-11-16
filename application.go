@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"net/http"
 
 	"github.com/aniket-skroman/skroman_sales_service.git/apis"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/database"
@@ -63,6 +64,10 @@ func main() {
 
 	store := apis.NewStore(db)
 	router := init_routers()
+
+	router.GET("/", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"Data": "Service working..."})
+	})
 
 	routing(router, store)
 	router.Run(":" + PORT)
