@@ -42,7 +42,7 @@ const (
 // }
 
 func init_routers() *gin.Engine {
-	router := gin.Default()
+	router := gin.New()
 	router.Use(cors.New(CORSConfig()))
 	return router
 }
