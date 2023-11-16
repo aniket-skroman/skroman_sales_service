@@ -3,7 +3,6 @@ package services
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"reflect"
 	"strconv"
 
@@ -41,7 +40,7 @@ func (ser *sale_service) CreateNewLead(req dto.CreateNewLeadDTO) (db.SaleLeads, 
 	_, err = strconv.Atoi(req.ReferalContact)
 
 	if err != nil || len(req.ReferalContact) != 10 {
-		return db.SaleLeads{}, errors.New("invalid contact please check params")
+		return db.SaleLeads{}, helper.ERR_REQUIRED_PARAMS
 	}
 
 	args := db.CreateNewLeadParams{
@@ -53,7 +52,6 @@ func (ser *sale_service) CreateNewLead(req dto.CreateNewLeadDTO) (db.SaleLeads, 
 	}
 
 	new_lead, err := ser.sale_lead_repo.CreateSalesLead(args)
-	fmt.Println("Error from serv : ", err)
 	return new_lead, err
 }
 func (ser *sale_service) FetchAllLeads(req dto.FetchAllLeadsRequestDTO) (interface{}, error) {

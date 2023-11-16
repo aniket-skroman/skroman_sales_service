@@ -18,6 +18,16 @@ type CreateLeadInfoRequestDTO struct {
 	LeadType     string `json:"lead_type" binding:"required"`
 }
 
+type UpdateLeadInfoRequestDTO struct {
+	Name         string `json:"name" binding:"required"`
+	Email        string `json:"email" binding:"required,email"`
+	Contact      string `json:"contact" binding:"required,min=10"`
+	AddressLine1 string `json:"address_line_1" binding:"required"`
+	City         string `json:"city" binding:"required"`
+	State        string `json:"state" binding:"required"`
+	LeadType     string `json:"lead_type" binding:"required"`
+}
+
 type GetLeadInfoDTO struct {
 	ID           uuid.UUID `json:"id"`
 	LeadID       uuid.UUID `json:"lead_id"`

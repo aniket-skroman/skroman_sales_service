@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"log"
 	"os"
 
 	"github.com/aniket-skroman/skroman_sales_service.git/apis"
@@ -51,13 +52,14 @@ func init_routers() *gin.Engine {
 func routing(route *gin.Engine, store *apis.Store) {
 	routers.SalesRouter(route, store)
 	routers.LeadInfoRouter(route, store)
+	routers.LeadOrderRouter(route, store)
 }
 
 func main() {
 	db := database.DB_Instance
 	defer func(db *sql.DB) {
 		if err := database.CloseDB(db); err != nil {
-			panic(err)
+			log.Fatal("connection closed issued : ", err)
 		}
 	}(db)
 

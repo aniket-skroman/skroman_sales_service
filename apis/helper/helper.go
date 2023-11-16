@@ -10,12 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
-var ERR_INVALID_ID error
-var ERR_REQUIRED_PARAMS error
+var (
+	ERR_INVALID_ID      error
+	ERR_REQUIRED_PARAMS error
+	Err_Lead_Exists     error
+	Err_Data_Not_Found  error
+	Err_Update_Failed   error
+	Err_Delete_Failed   error
+)
 
 func init() {
 	ERR_INVALID_ID = errors.New("invalid id found")
 	ERR_REQUIRED_PARAMS = errors.New("please provide a required params")
+	Err_Lead_Exists = errors.New("lead info already exists for current lead")
+	Err_Data_Not_Found = errors.New("data not found")
+	Err_Update_Failed = errors.New("failed to update resources")
+	Err_Delete_Failed = errors.New("failed to delete resource")
 }
 
 func SetPaginationData(page int, total int64) {
