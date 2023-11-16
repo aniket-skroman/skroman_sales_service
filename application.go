@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"log"
-	"os"
 
 	"github.com/aniket-skroman/skroman_sales_service.git/apis"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/database"
@@ -16,7 +15,7 @@ import (
 )
 
 var (
-	PORT = ""
+	PORT = "9001"
 )
 
 func CORSConfig() cors.Config {
@@ -40,7 +39,7 @@ func init() {
 	if err := godotenv.Load(); err != nil {
 		panic(err)
 	}
-	PORT = os.Getenv("PORT")
+	//PORT = os.Getenv("PORT")
 }
 
 func init_routers() *gin.Engine {
