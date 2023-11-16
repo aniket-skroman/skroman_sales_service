@@ -9,7 +9,6 @@ import (
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/routers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 
 	_ "github.com/lib/pq"
 )
@@ -35,12 +34,12 @@ const (
 	ContentTypeText   = "text/plain; charset=utf-8"
 )
 
-func init() {
-	if err := godotenv.Load(); err != nil {
-		panic(err)
-	}
-	//PORT = os.Getenv("PORT")
-}
+// func init() {
+// 	if err := godotenv.Load(); err != nil {
+// 		panic(err)
+// 	}
+// 	//PORT = os.Getenv("PORT")
+// }
 
 func init_routers() *gin.Engine {
 	router := gin.Default()
