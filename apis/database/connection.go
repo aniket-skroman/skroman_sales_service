@@ -3,26 +3,24 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"os"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 var (
-	// dbDriver = "postgres"
-	// dbSource = "postgresql://postgres:support12@skroman-user.ckwveljlsuux.ap-south-1.rds.amazonaws.com:5432/skroman_sales_service"
+	dbDriver = "postgres"
+	dbSource = "postgresql://postgres:support12@skroman-user.ckwveljlsuux.ap-south-1.rds.amazonaws.com:5432/skroman_sales_service"
 
-	dbDriver = ""
-	dbSource = ""
+	// dbDriver = ""
+	// dbSource = ""
 )
 
 func makeConnection() *sql.DB {
-	if err := godotenv.Load(); err != nil {
-		panic(err)
-	}
-	dbDriver = os.Getenv("DB_DRIVER")
-	dbSource = os.Getenv("DB_SOURCE")
+	// if err := godotenv.Load(); err != nil {
+	// 	panic(err)
+	// }
+	// dbDriver = os.Getenv("DB_DRIVER")
+	// dbSource = os.Getenv("DB_SOURCE")
 
 	db, err := sql.Open(dbDriver, dbSource)
 
