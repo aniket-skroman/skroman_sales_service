@@ -8,9 +8,21 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+const countOfLeads = `-- name: CountOfLeads :one
+select count(*) from sale_leads
+`
+
+func (q *Queries) CountOfLeads(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countOfLeads)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
 
 const createNewLead = `-- name: CreateNewLead :one
 insert into sale_leads (
@@ -57,8 +69,20 @@ func (q *Queries) CreateNewLead(ctx context.Context, arg CreateNewLeadParams) (S
 }
 
 const fetchAllLeads = `-- name: FetchAllLeads :many
-select id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at, is_lead_info, is_order_info from sale_leads
-order by created_at desc
+select sl.id as lead_id,
+sl.lead_by as lead_by, sl.referal_name as referal_name,
+sl.referal_contact as referal_contact, sl.status as status,
+sl.created_at as lead_created_at, sl.updated_at as lead_updated_at,
+sl.is_lead_info as is_lead_info, sl.is_order_info as is_order_info,
+sl.quatation_count as quatation_count, li.id as lead_info_id,
+li.name as name, li.email as email, li.contact as contact,
+li.address_line_1 as address_line_1, li.city as city, li.state as state,
+li.lead_type as lead_type, li.created_at as lead_info_created_at,
+li.updated_at as lead_info_updated_at
+from sale_leads as sl
+left join lead_info as li 
+on sl.id = li.lead_id
+order by sl.created_at desc
 limit $1
 offset $2
 `
@@ -68,27 +92,60 @@ type FetchAllLeadsParams struct {
 	Offset int32 `json:"offset"`
 }
 
+type FetchAllLeadsRow struct {
+	LeadID            uuid.UUID      `json:"lead_id"`
+	LeadBy            uuid.UUID      `json:"lead_by"`
+	ReferalName       string         `json:"referal_name"`
+	ReferalContact    string         `json:"referal_contact"`
+	Status            string         `json:"status"`
+	LeadCreatedAt     time.Time      `json:"lead_created_at"`
+	LeadUpdatedAt     time.Time      `json:"lead_updated_at"`
+	IsLeadInfo        sql.NullBool   `json:"is_lead_info"`
+	IsOrderInfo       sql.NullBool   `json:"is_order_info"`
+	QuatationCount    sql.NullInt32  `json:"quatation_count"`
+	LeadInfoID        uuid.NullUUID  `json:"lead_info_id"`
+	Name              sql.NullString `json:"name"`
+	Email             sql.NullString `json:"email"`
+	Contact           sql.NullString `json:"contact"`
+	AddressLine1      sql.NullString `json:"address_line_1"`
+	City              sql.NullString `json:"city"`
+	State             sql.NullString `json:"state"`
+	LeadType          sql.NullString `json:"lead_type"`
+	LeadInfoCreatedAt sql.NullTime   `json:"lead_info_created_at"`
+	LeadInfoUpdatedAt sql.NullTime   `json:"lead_info_updated_at"`
+}
+
 // fetch all leads
-func (q *Queries) FetchAllLeads(ctx context.Context, arg FetchAllLeadsParams) ([]SaleLeads, error) {
+func (q *Queries) FetchAllLeads(ctx context.Context, arg FetchAllLeadsParams) ([]FetchAllLeadsRow, error) {
 	rows, err := q.db.QueryContext(ctx, fetchAllLeads, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []SaleLeads{}
+	items := []FetchAllLeadsRow{}
 	for rows.Next() {
-		var i SaleLeads
+		var i FetchAllLeadsRow
 		if err := rows.Scan(
-			&i.ID,
+			&i.LeadID,
 			&i.LeadBy,
 			&i.ReferalName,
 			&i.ReferalContact,
 			&i.Status,
-			&i.QuatationCount,
-			&i.CreatedAt,
-			&i.UpdatedAt,
+			&i.LeadCreatedAt,
+			&i.LeadUpdatedAt,
 			&i.IsLeadInfo,
 			&i.IsOrderInfo,
+			&i.QuatationCount,
+			&i.LeadInfoID,
+			&i.Name,
+			&i.Email,
+			&i.Contact,
+			&i.AddressLine1,
+			&i.City,
+			&i.State,
+			&i.LeadType,
+			&i.LeadInfoCreatedAt,
+			&i.LeadInfoUpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -104,26 +161,71 @@ func (q *Queries) FetchAllLeads(ctx context.Context, arg FetchAllLeadsParams) ([
 }
 
 const fetchLeadByLeadId = `-- name: FetchLeadByLeadId :one
-select id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at, is_lead_info, is_order_info from sale_leads
-where id = $1
+select sl.id as lead_id,
+sl.lead_by as lead_by, sl.referal_name as referal_name,
+sl.referal_contact as referal_contact, sl.status as status,
+sl.created_at as lead_created_at, sl.updated_at as lead_updated_at,
+sl.is_lead_info as is_lead_info, sl.is_order_info as is_order_info,
+sl.quatation_count as quatation_count, li.id as lead_info_id,
+li.name as name, li.email as email, li.contact as contact,
+li.address_line_1 as address_line_1, li.city as city, li.state as state,
+li.lead_type as lead_type, li.created_at as lead_info_created_at,
+li.updated_at as lead_info_updated_at
+from sale_leads as sl
+inner join lead_info as li 
+on sl.id = li.lead_id
+where sl.id = $1
 limit 1
 `
 
+type FetchLeadByLeadIdRow struct {
+	LeadID            uuid.UUID      `json:"lead_id"`
+	LeadBy            uuid.UUID      `json:"lead_by"`
+	ReferalName       string         `json:"referal_name"`
+	ReferalContact    string         `json:"referal_contact"`
+	Status            string         `json:"status"`
+	LeadCreatedAt     time.Time      `json:"lead_created_at"`
+	LeadUpdatedAt     time.Time      `json:"lead_updated_at"`
+	IsLeadInfo        sql.NullBool   `json:"is_lead_info"`
+	IsOrderInfo       sql.NullBool   `json:"is_order_info"`
+	QuatationCount    sql.NullInt32  `json:"quatation_count"`
+	LeadInfoID        uuid.UUID      `json:"lead_info_id"`
+	Name              string         `json:"name"`
+	Email             sql.NullString `json:"email"`
+	Contact           string         `json:"contact"`
+	AddressLine1      sql.NullString `json:"address_line_1"`
+	City              sql.NullString `json:"city"`
+	State             sql.NullString `json:"state"`
+	LeadType          sql.NullString `json:"lead_type"`
+	LeadInfoCreatedAt time.Time      `json:"lead_info_created_at"`
+	LeadInfoUpdatedAt time.Time      `json:"lead_info_updated_at"`
+}
+
 // fetch lead by id
-func (q *Queries) FetchLeadByLeadId(ctx context.Context, id uuid.UUID) (SaleLeads, error) {
+func (q *Queries) FetchLeadByLeadId(ctx context.Context, id uuid.UUID) (FetchLeadByLeadIdRow, error) {
 	row := q.db.QueryRowContext(ctx, fetchLeadByLeadId, id)
-	var i SaleLeads
+	var i FetchLeadByLeadIdRow
 	err := row.Scan(
-		&i.ID,
+		&i.LeadID,
 		&i.LeadBy,
 		&i.ReferalName,
 		&i.ReferalContact,
 		&i.Status,
-		&i.QuatationCount,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.LeadCreatedAt,
+		&i.LeadUpdatedAt,
 		&i.IsLeadInfo,
 		&i.IsOrderInfo,
+		&i.QuatationCount,
+		&i.LeadInfoID,
+		&i.Name,
+		&i.Email,
+		&i.Contact,
+		&i.AddressLine1,
+		&i.City,
+		&i.State,
+		&i.LeadType,
+		&i.LeadInfoCreatedAt,
+		&i.LeadInfoUpdatedAt,
 	)
 	return i, err
 }

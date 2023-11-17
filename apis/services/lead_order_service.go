@@ -12,7 +12,7 @@ import (
 
 type LeadOrderService interface {
 	CreateLeadOrder(req dto.CreateLeadOrderRequestDTO) (dto.LeadOrderDTO, error)
-	FetchOrdersByLeadId(lead_id string) ([]dto.LeadOrderDTO, error)
+	FetchOrdersByLeadId(lead_id uuid.UUID) ([]dto.LeadOrderDTO, error)
 	DeleteLeadOrder(req dto.DeleteLeadOrderRequestDTO) error
 	UpdateLeadOrder(req dto.UpdateLeadOrderRequestDTO, order_id string) (dto.LeadOrderDTO, error)
 	FetchOrdersByOrderId(order_id string) (dto.LeadOrderDTO, error)
@@ -54,14 +54,14 @@ func (serv *lead_order_serv) CreateLeadOrder(req dto.CreateLeadOrderRequestDTO) 
 	return new(dto.LeadOrderDTO).MakeLeadOrderDTO(order).(dto.LeadOrderDTO), nil
 }
 
-func (serv *lead_order_serv) FetchOrdersByLeadId(lead_id string) ([]dto.LeadOrderDTO, error) {
-	lead_obj_id, err := uuid.Parse(lead_id)
+func (serv *lead_order_serv) FetchOrdersByLeadId(lead_id uuid.UUID) ([]dto.LeadOrderDTO, error) {
+	// lead_obj_id, err := uuid.Parse(lead_id)
 
-	if err != nil {
-		return nil, helper.ERR_INVALID_ID
-	}
+	// if err != nil {
+	// 	return nil, helper.ERR_INVALID_ID
+	// }
 
-	args := uuid.NullUUID{UUID: lead_obj_id, Valid: true}
+	args := uuid.NullUUID{UUID: lead_id, Valid: true}
 
 	orders, err := serv.order_repo.FetchOrdersByLeadId(args)
 

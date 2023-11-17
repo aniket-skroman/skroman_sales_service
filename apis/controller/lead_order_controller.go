@@ -10,6 +10,7 @@ import (
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/services"
 	"github.com/aniket-skroman/skroman_sales_service.git/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type LeadOrderController interface {
@@ -58,9 +59,11 @@ func (cont *lead_order_cont) CreateLeadOrder(ctx *gin.Context) {
 }
 
 func (cont *lead_order_cont) FetchOrdersByLeadId(ctx *gin.Context) {
-	lead_id := ctx.Param("lead_id")
+	//lead_id := ctx.Param("lead_id")
 
-	orders, err := cont.serv.FetchOrdersByLeadId(lead_id)
+	lead_id, _ := ctx.Get("lead_id")
+
+	orders, err := cont.serv.FetchOrdersByLeadId(lead_id.(uuid.UUID))
 
 	if err != nil {
 		cont.response = utils.BuildFailedResponse(err.Error())

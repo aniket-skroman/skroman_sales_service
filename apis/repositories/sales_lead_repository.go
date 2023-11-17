@@ -14,9 +14,10 @@ type SalesRepository interface {
 	CreateSalesLead(args db.CreateNewLeadParams) (db.SaleLeads, error)
 	UpdateSalesLeadRef(args db.UpdateSaleLeadReferalParams) (db.SaleLeads, error)
 	IncreaseQuatationCount(lead_id uuid.UUID) (int64, error)
-	FetchAllLeads(args db.FetchAllLeadsParams) ([]db.SaleLeads, error)
-	FetchLeadByLeadId(lead_id uuid.UUID) (db.SaleLeads, error)
+	FetchAllLeads(args db.FetchAllLeadsParams) ([]db.FetchAllLeadsRow, error)
+	FetchLeadByLeadId(lead_id uuid.UUID) (db.FetchLeadByLeadIdRow, error)
 	IncreaeQuatationCount(lead_id uuid.UUID) (int64, error)
+	CountSalesLead() (int64, error)
 }
 
 type sale_repo struct {

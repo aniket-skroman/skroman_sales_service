@@ -20,17 +20,31 @@ type FetchAllLeadsRequestDTO struct {
 	PageSize int `uri:"page_size"`
 }
 
+type SaleLeadsDetailsDTO struct {
+	LeadID         uuid.UUID      `json:"lead_id"`
+	LeadBy         uuid.UUID      `json:"lead_by"`
+	ReferalName    string         `json:"referal_name"`
+	ReferalContact string         `json:"referal_contact"`
+	Status         string         `json:"status"`
+	LeadCreatedAt  time.Time      `json:"lead_created_at"`
+	LeadUpdatedAt  time.Time      `json:"lead_updated_at"`
+	QuatationCount int32          `json:"quatation_count"`
+	LeadInfo       GetLeadInfoDTO `json:"lead_info"`
+}
+
 type SaleLeadsDTO struct {
-	ID             uuid.UUID `json:"id"`
-	LeadBy         uuid.UUID `json:"lead_by"`
-	ReferalName    string    `json:"referal_name"`
-	ReferalContact string    `json:"referal_contact"`
-	Status         string    `json:"status"`
-	QuatationCount int32     `json:"quatation_count"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
-	IsLeadInfo     bool      `json:"is_lead_info"`
-	IsOrderInfo    bool      `json:"is_order_info"`
+	ID             uuid.UUID       `json:"id"`
+	LeadBy         uuid.UUID       `json:"lead_by"`
+	ReferalName    string          `json:"referal_name"`
+	ReferalContact string          `json:"referal_contact"`
+	Status         string          `json:"status"`
+	QuatationCount int32           `json:"quatation_count"`
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
+	IsLeadInfo     bool            `json:"is_lead_info"`
+	IsOrderInfo    bool            `json:"is_order_info"`
+	LeadInfo       *GetLeadInfoDTO `json:"lead_info,omitempty"`
+	LeadOrders     *[]LeadOrderDTO `json:"lead_orders,omitempty"`
 }
 
 func (sale *SaleLeadsDTO) MakeSaleLeadsDTO(modeule_data ...db.SaleLeads) interface{} {

@@ -18,7 +18,9 @@ var (
 
 func SalesRouter(router *gin.Engine, store *apis.Store) {
 	sales_repository = repositories.NewSalesRepository(store)
-	sales_service = services.NewSalesLeadService(sales_repository)
+	lead_order_repo = repositories.NewLeadOrderRepository(store)
+	lead_order_ser = services.NewLeadOrderService(lead_order_repo)
+	sales_service = services.NewSalesLeadService(sales_repository, lead_order_ser)
 	sales_controller = controller.NewSaleLeadsController(sales_service)
 	jwt_servive = services.NewJWTService()
 

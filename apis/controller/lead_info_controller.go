@@ -10,6 +10,7 @@ import (
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/services"
 	"github.com/aniket-skroman/skroman_sales_service.git/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type LeadInfoController interface {
@@ -66,9 +67,9 @@ func (cont *lead_info_cont) CreateLeadInfo(ctx *gin.Context) {
 }
 
 func (cont *lead_info_cont) FetchLeadInfoByLeadID(ctx *gin.Context) {
-	lead_id := ctx.Param("lead_id")
-
-	result, err := cont.serv.FetchLeadInfoByLeadID(lead_id)
+	// lead_id := ctx.Param("lead_id")
+	lead_id, _ := ctx.Get("lead_id")
+	result, err := cont.serv.FetchLeadInfoByLeadID(lead_id.(uuid.UUID))
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -122,14 +123,20 @@ func (cont *lead_info_cont) UpdateLeadInfo(ctx *gin.Context) {
 }
 
 func (cont *lead_info_cont) DeleteLeadInfo(ctx *gin.Context) {
-	lead_id := ctx.Param("lead_id")
+	//lead_id := ctx.Param("lead_id")
 
-	err := cont.serv.DeleteLeadInfo(lead_id)
+	lead_id, _ := ctx.Get("lead_id")
+
+	err := cont.serv.DeleteLeadInfo(lead_id.(uuid.UUID))
 
 	if err != nil {
 		cont.response = utils.BuildFailedResponse(err.Error())
 		if errors.Is(err, helper.ERR_INVALID_ID) {
 			ctx.JSON(http.StatusBadRequest, cont.response)
+			return
+		} else if errors.Is(err, sql.ErrNoRows) {
+			cont.response = utils.BuildFailedResponse(helper.Err_Data_Not_Found.Error())
+			ctx.JSON(http.StatusNotFound, cont.response)
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, cont.response)

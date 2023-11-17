@@ -14,9 +14,9 @@ import (
 
 type LeadInfoService interface {
 	CreateLeadInfo(req dto.CreateLeadInfoRequestDTO) (dto.GetLeadInfoDTO, error)
-	FetchLeadInfoByLeadID(lead_id string) (dto.GetLeadInfoDTO, error)
+	FetchLeadInfoByLeadID(lead_id uuid.UUID) (dto.GetLeadInfoDTO, error)
 	UpdateLeadInfo(req dto.UpdateLeadInfoRequestDTO, lead_info_id string) (dto.GetLeadInfoDTO, error)
-	DeleteLeadInfo(lead_id string) error
+	DeleteLeadInfo(lead_id uuid.UUID) error
 }
 
 type lead_info_service struct {
@@ -67,14 +67,14 @@ func (ser *lead_info_service) CreateLeadInfo(req dto.CreateLeadInfoRequestDTO) (
 	return result.(dto.GetLeadInfoDTO), nil
 }
 
-func (ser *lead_info_service) FetchLeadInfoByLeadID(lead_id string) (dto.GetLeadInfoDTO, error) {
-	lead_obj_id, err := uuid.Parse(lead_id)
+func (ser *lead_info_service) FetchLeadInfoByLeadID(lead_id uuid.UUID) (dto.GetLeadInfoDTO, error) {
+	// lead_obj_id, err := uuid.Parse(lead_id)
 
-	if err != nil {
-		return dto.GetLeadInfoDTO{}, helper.ERR_INVALID_ID
-	}
+	// if err != nil {
+	// 	return dto.GetLeadInfoDTO{}, helper.ERR_INVALID_ID
+	// }
 
-	args := uuid.NullUUID{UUID: lead_obj_id, Valid: true}
+	args := uuid.NullUUID{UUID: lead_id, Valid: true}
 
 	result, err := ser.lead_info_repo.FetchLeadInfoByLead(args)
 
@@ -124,14 +124,14 @@ func (ser *lead_info_service) UpdateLeadInfo(req dto.UpdateLeadInfoRequestDTO, l
 	return new(dto.GetLeadInfoDTO).MakeGetLeadInfo(result).(dto.GetLeadInfoDTO), nil
 }
 
-func (ser *lead_info_service) DeleteLeadInfo(lead_id string) error {
-	leat_obj_id, err := uuid.Parse(lead_id)
+func (ser *lead_info_service) DeleteLeadInfo(lead_id uuid.UUID) error {
+	// leat_obj_id, err := uuid.Parse(lead_id)
 
-	if err != nil {
-		return helper.ERR_INVALID_ID
-	}
+	// if err != nil {
+	// 	return helper.ERR_INVALID_ID
+	// }
 
-	args := uuid.NullUUID{UUID: leat_obj_id, Valid: true}
+	args := uuid.NullUUID{UUID: lead_id, Valid: true}
 
 	result, err := ser.lead_info_repo.DeleteLeadInfo(args)
 

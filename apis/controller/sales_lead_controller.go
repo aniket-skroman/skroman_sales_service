@@ -11,6 +11,7 @@ import (
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/services"
 	"github.com/aniket-skroman/skroman_sales_service.git/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type SaleLeadsController interface {
@@ -75,14 +76,14 @@ func (cont *sale_controller) FetchAllLeads(ctx *gin.Context) {
 		return
 	}
 
-	cont.response = utils.BuildSuccessResponse(utils.FETCHED_SUCCESS, utils.SALES_LEAD, result)
+	cont.response = utils.BuildResponseWithPagination(utils.FETCHED_SUCCESS, "", utils.SALES_LEAD, result)
 	ctx.JSON(http.StatusOK, cont.response)
 }
 
 func (cont *sale_controller) FetchLeadByLeadId(ctx *gin.Context) {
-	var lead_id = ctx.Param("lead_id")
+	m_id, _ := ctx.Get("lead_id")
 
-	lead, err := cont.sale_serv.FetchLeadByLeadId(lead_id)
+	lead, err := cont.sale_serv.FetchLeadByLeadId(m_id.(uuid.UUID))
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -104,15 +105,9 @@ func (cont *sale_controller) FetchLeadByLeadId(ctx *gin.Context) {
 }
 
 func (cont *sale_controller) IncreaeQuatationCount(ctx *gin.Context) {
-	lead_id := ctx.Param("lead_id")
-
-	if lead_id == "" {
-		cont.response = utils.BuildFailedResponse(helper.ERR_REQUIRED_PARAMS.Error())
-		ctx.JSON(http.StatusBadRequest, cont.response)
-		return
-	}
-
-	err := cont.sale_serv.IncreaeQuatationCount(lead_id)
+	//lead_id := ctx.Param("lead_id")
+	lead_id, _ := ctx.Get("lead_id")
+	err := cont.sale_serv.IncreaeQuatationCount(lead_id.(uuid.UUID))
 
 	if err != nil {
 		if errors.Is(err, helper.ERR_INVALID_ID) {

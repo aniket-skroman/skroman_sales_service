@@ -27,15 +27,39 @@ where id = $1;
 
 /* fetch all leads */
 -- name: FetchAllLeads :many
-select * from sale_leads
-order by created_at desc
+select sl.id as lead_id,
+sl.lead_by as lead_by, sl.referal_name as referal_name,
+sl.referal_contact as referal_contact, sl.status as status,
+sl.created_at as lead_created_at, sl.updated_at as lead_updated_at,
+sl.is_lead_info as is_lead_info, sl.is_order_info as is_order_info,
+sl.quatation_count as quatation_count, li.id as lead_info_id,
+li.name as name, li.email as email, li.contact as contact,
+li.address_line_1 as address_line_1, li.city as city, li.state as state,
+li.lead_type as lead_type, li.created_at as lead_info_created_at,
+li.updated_at as lead_info_updated_at
+from sale_leads as sl
+left join lead_info as li 
+on sl.id = li.lead_id
+order by sl.created_at desc
 limit $1
 offset $2;
 
 /* fetch lead by id */
 -- name: FetchLeadByLeadId :one
-select * from sale_leads
-where id = $1
+select sl.id as lead_id,
+sl.lead_by as lead_by, sl.referal_name as referal_name,
+sl.referal_contact as referal_contact, sl.status as status,
+sl.created_at as lead_created_at, sl.updated_at as lead_updated_at,
+sl.is_lead_info as is_lead_info, sl.is_order_info as is_order_info,
+sl.quatation_count as quatation_count, li.id as lead_info_id,
+li.name as name, li.email as email, li.contact as contact,
+li.address_line_1 as address_line_1, li.city as city, li.state as state,
+li.lead_type as lead_type, li.created_at as lead_info_created_at,
+li.updated_at as lead_info_updated_at
+from sale_leads as sl
+inner join lead_info as li 
+on sl.id = li.lead_id
+where sl.id = $1
 limit 1;
 
 /* make a flags true or false for info or orde */
@@ -50,3 +74,6 @@ update sale_leads
 set is_order_info = $2
 where id = $1
 returning *;
+
+-- name: CountOfLeads :one
+select count(*) from sale_leads;

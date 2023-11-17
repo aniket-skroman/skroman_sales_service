@@ -7,6 +7,7 @@ import (
 
 	"github.com/aniket-skroman/skroman_sales_service.git/apis"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/database"
+	"github.com/aniket-skroman/skroman_sales_service.git/apis/middleware"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/routers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -45,6 +46,7 @@ const (
 func init_routers() *gin.Engine {
 	router := gin.New()
 	router.Use(cors.New(CORSConfig()))
+	router.Use(middleware.ValidateRequest)
 	return router
 }
 

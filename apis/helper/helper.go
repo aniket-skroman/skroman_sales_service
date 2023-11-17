@@ -72,6 +72,7 @@ func Handle_required_param_error(err error) string {
 			break
 		}
 	} else {
+		fmt.Println("Error MSG : ", err)
 		if strings.Contains(err.Error(), "cannot unmarshal string into") {
 			err_msg = "required a integer but found string, please check params"
 		} else if strings.Contains(err.Error(), "cannot unmarshal number into") {

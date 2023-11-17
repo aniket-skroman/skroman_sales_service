@@ -1,0 +1,1 @@
+drop index if exists nci_lead_id on lead_info;
