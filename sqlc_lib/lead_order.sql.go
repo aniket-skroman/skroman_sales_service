@@ -155,6 +155,8 @@ update lead_order
 set device_type = $3,
 device_model = $4,
 device_price = $5,
+quantity = $6,
+device_name = $7,
 updated_at = CURRENT_TIMESTAMP
 where id = $1 and lead_id = $2
 returning id, lead_id, device_type, device_model, device_name, device_price, created_at, updated_at, quantity
@@ -166,6 +168,8 @@ type UpdateLeadOrderParams struct {
 	DeviceType  sql.NullString `json:"device_type"`
 	DeviceModel sql.NullString `json:"device_model"`
 	DevicePrice sql.NullInt32  `json:"device_price"`
+	Quantity    sql.NullInt32  `json:"quantity"`
+	DeviceName  sql.NullString `json:"device_name"`
 }
 
 // update a specific order
@@ -176,6 +180,8 @@ func (q *Queries) UpdateLeadOrder(ctx context.Context, arg UpdateLeadOrderParams
 		arg.DeviceType,
 		arg.DeviceModel,
 		arg.DevicePrice,
+		arg.Quantity,
+		arg.DeviceName,
 	)
 	var i LeadOrder
 	err := row.Scan(

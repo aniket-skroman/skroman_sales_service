@@ -133,6 +133,8 @@ func (serv *lead_order_serv) UpdateLeadOrder(req dto.UpdateLeadOrderRequestDTO, 
 		DeviceType:  sql.NullString{String: req.DeviceType, Valid: true},
 		DeviceModel: sql.NullString{String: req.DeviceModel, Valid: true},
 		DevicePrice: sql.NullInt32{Int32: req.DevicePrice, Valid: true},
+		Quantity:    sql.NullInt32{Int32: req.Quantity, Valid: true},
+		DeviceName:  sql.NullString{String: req.DeviceName, Valid: true},
 	}
 
 	result, err := serv.order_repo.UpdateLeadOrder(args)

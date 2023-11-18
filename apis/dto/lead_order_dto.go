@@ -22,10 +22,12 @@ type DeleteLeadOrderRequestDTO struct {
 }
 
 type UpdateLeadOrderRequestDTO struct {
-	LeadID      string `json:"lead_id"`
-	DeviceType  string `json:"device_type"`
-	DeviceModel string `json:"device_model"`
-	DevicePrice int32  `json:"device_price"`
+	LeadID      string `json:"lead_id" binding:"required"`
+	DeviceType  string `json:"device_type" binding:"required"`
+	DeviceModel string `json:"device_model" binding:"required"`
+	DevicePrice int32  `json:"device_price" binding:"required"`
+	Quantity    int32  `json:"quantity" binding:"required"`
+	DeviceName  string `json:"device_name"`
 }
 
 type LeadOrderDTO struct {

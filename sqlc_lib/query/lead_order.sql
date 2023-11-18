@@ -29,6 +29,8 @@ update lead_order
 set device_type = $3,
 device_model = $4,
 device_price = $5,
+quantity = $6,
+device_name = $7,
 updated_at = CURRENT_TIMESTAMP
 where id = $1 and lead_id = $2
 returning *;
