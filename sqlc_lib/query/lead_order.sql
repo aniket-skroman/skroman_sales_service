@@ -4,9 +4,10 @@ insert into lead_order (
     device_type,
     device_model,
     device_price,
-    device_name
+    device_name,
+    quantity
 ) values (
-    $1,$2,$3,$4,$5
+    $1,$2,$3,$4,$5,$6
 ) returning *;
 
 

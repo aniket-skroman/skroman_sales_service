@@ -34,6 +34,7 @@ type LeadOrder struct {
 	DevicePrice sql.NullInt32  `json:"device_price"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
+	Quantity    sql.NullInt32  `json:"quantity"`
 }
 
 type SaleLeads struct {

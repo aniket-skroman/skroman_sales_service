@@ -1,7 +1,6 @@
 package dto
 
 import (
-	"fmt"
 	"time"
 
 	db "github.com/aniket-skroman/skroman_sales_service.git/sqlc_lib"
@@ -14,6 +13,7 @@ type CreateLeadOrderRequestDTO struct {
 	DeviceModel string `json:"device_model" binding:"required"`
 	DevicePrice int32  `json:"device_price" binding:"required"`
 	DeviceName  string `json:"device_name"`
+	Quantity    int32  `json:"quantity" binding:"required"`
 }
 
 type DeleteLeadOrderRequestDTO struct {
@@ -35,6 +35,7 @@ type LeadOrderDTO struct {
 	DeviceModel string        `json:"device_model"`
 	DeviceName  string        `json:"device_name"`
 	DevicePrice int32         `json:"device_price"`
+	Quantity    int32         `json:"quantity"`
 	CreatedAt   time.Time     `json:"created_at"`
 	UpdatedAt   time.Time     `json:"updated_at"`
 }
@@ -48,6 +49,7 @@ func (order *LeadOrderDTO) MakeLeadOrderDTO(module_data ...db.LeadOrder) interfa
 			DeviceModel: module_data[0].DeviceModel.String,
 			DeviceName:  module_data[0].DeviceName.String,
 			DevicePrice: module_data[0].DevicePrice.Int32,
+			Quantity:    module_data[0].Quantity.Int32,
 			CreatedAt:   module_data[0].CreatedAt,
 			UpdatedAt:   module_data[0].UpdatedAt,
 		}
@@ -63,10 +65,10 @@ func (order *LeadOrderDTO) MakeLeadOrderDTO(module_data ...db.LeadOrder) interfa
 			DeviceModel: module_data[i].DeviceModel.String,
 			DeviceName:  module_data[i].DeviceName.String,
 			DevicePrice: module_data[i].DevicePrice.Int32,
+			Quantity:    module_data[i].Quantity.Int32,
 			CreatedAt:   module_data[i].CreatedAt,
 			UpdatedAt:   module_data[i].UpdatedAt,
 		}
 	}
-	fmt.Println("Returning orders....")
 	return orders
 }

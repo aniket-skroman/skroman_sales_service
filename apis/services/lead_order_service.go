@@ -41,6 +41,7 @@ func (serv *lead_order_serv) CreateLeadOrder(req dto.CreateLeadOrderRequestDTO) 
 		DeviceModel: sql.NullString{String: req.DeviceModel, Valid: true},
 		DevicePrice: sql.NullInt32{Int32: req.DevicePrice, Valid: true},
 		DeviceName:  sql.NullString{String: req.DeviceName, Valid: true},
+		Quantity:    sql.NullInt32{Int32: req.Quantity, Valid: true},
 	}
 
 	order, err := serv.order_repo.CreateLeadOrder(args)

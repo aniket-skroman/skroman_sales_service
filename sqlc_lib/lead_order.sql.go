@@ -31,10 +31,11 @@ insert into lead_order (
     device_type,
     device_model,
     device_price,
-    device_name
+    device_name,
+    quantity
 ) values (
-    $1,$2,$3,$4,$5
-) returning id, lead_id, device_type, device_model, device_name, device_price, created_at, updated_at
+    $1,$2,$3,$4,$5,$6
+) returning id, lead_id, device_type, device_model, device_name, device_price, created_at, updated_at, quantity
 `
 
 type CreateLeadOrderParams struct {
@@ -43,6 +44,7 @@ type CreateLeadOrderParams struct {
 	DeviceModel sql.NullString `json:"device_model"`
 	DevicePrice sql.NullInt32  `json:"device_price"`
 	DeviceName  sql.NullString `json:"device_name"`
+	Quantity    sql.NullInt32  `json:"quantity"`
 }
 
 func (q *Queries) CreateLeadOrder(ctx context.Context, arg CreateLeadOrderParams) (LeadOrder, error) {
@@ -52,6 +54,7 @@ func (q *Queries) CreateLeadOrder(ctx context.Context, arg CreateLeadOrderParams
 		arg.DeviceModel,
 		arg.DevicePrice,
 		arg.DeviceName,
+		arg.Quantity,
 	)
 	var i LeadOrder
 	err := row.Scan(
@@ -63,6 +66,7 @@ func (q *Queries) CreateLeadOrder(ctx context.Context, arg CreateLeadOrderParams
 		&i.DevicePrice,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Quantity,
 	)
 	return i, err
 }
@@ -83,7 +87,7 @@ func (q *Queries) DeleteLeadOrder(ctx context.Context, arg DeleteLeadOrderParams
 }
 
 const fetchLeadOrderByOrderId = `-- name: FetchLeadOrderByOrderId :one
-select id, lead_id, device_type, device_model, device_name, device_price, created_at, updated_at from lead_order
+select id, lead_id, device_type, device_model, device_name, device_price, created_at, updated_at, quantity from lead_order
 where id = $1
 limit 1
 `
@@ -101,12 +105,13 @@ func (q *Queries) FetchLeadOrderByOrderId(ctx context.Context, id uuid.UUID) (Le
 		&i.DevicePrice,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Quantity,
 	)
 	return i, err
 }
 
 const fetchOrdersByLeadId = `-- name: FetchOrdersByLeadId :many
-select id, lead_id, device_type, device_model, device_name, device_price, created_at, updated_at from lead_order
+select id, lead_id, device_type, device_model, device_name, device_price, created_at, updated_at, quantity from lead_order
 where lead_id = $1
 order by created_at desc
 `
@@ -130,6 +135,7 @@ func (q *Queries) FetchOrdersByLeadId(ctx context.Context, leadID uuid.NullUUID)
 			&i.DevicePrice,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Quantity,
 		); err != nil {
 			return nil, err
 		}
@@ -151,7 +157,7 @@ device_model = $4,
 device_price = $5,
 updated_at = CURRENT_TIMESTAMP
 where id = $1 and lead_id = $2
-returning id, lead_id, device_type, device_model, device_name, device_price, created_at, updated_at
+returning id, lead_id, device_type, device_model, device_name, device_price, created_at, updated_at, quantity
 `
 
 type UpdateLeadOrderParams struct {
@@ -181,6 +187,7 @@ func (q *Queries) UpdateLeadOrder(ctx context.Context, arg UpdateLeadOrderParams
 		&i.DevicePrice,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Quantity,
 	)
 	return i, err
 }

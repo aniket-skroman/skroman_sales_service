@@ -177,7 +177,6 @@ func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, erro
 			CreatedAt:    lead.LeadInfoCreatedAt,
 			UpdatedAt:    lead.LeadInfoUpdatedAt,
 		}
-
 	}()
 
 	go func() {
