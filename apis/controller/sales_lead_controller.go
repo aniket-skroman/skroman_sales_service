@@ -15,9 +15,11 @@ import (
 )
 
 type SaleLeadsController interface {
-	CreateNewLead(ctx *gin.Context)
-	FetchAllLeads(ctx *gin.Context)
-	FetchLeadByLeadId(ctx *gin.Context)
+	CreateNewLead(*gin.Context)
+	FetchAllLeads(*gin.Context)
+	FetchLeadByLeadId(*gin.Context)
+	FetchLeadCounts(*gin.Context)
+	FetchLeadsByStatus(ctx *gin.Context)
 }
 
 type sale_controller struct {
@@ -120,5 +122,45 @@ func (cont *sale_controller) IncreaeQuatationCount(ctx *gin.Context) {
 		return
 	}
 	cont.response = utils.BuildSuccessResponse("quatation count has been increased", utils.SALES_LEAD, utils.EmptyObj{})
+	ctx.JSON(http.StatusOK, cont.response)
+}
+
+func (cont *sale_controller) FetchLeadCounts(ctx *gin.Context) {
+	result, err := cont.sale_serv.FetchLeadCounts()
+
+	if err != nil {
+		cont.response = utils.BuildFailedResponse(err.Error())
+		ctx.JSON(http.StatusInternalServerError, cont.response)
+		return
+	}
+
+	cont.response = utils.BuildSuccessResponse(utils.FETCHED_SUCCESS, utils.SALES_LEAD, result)
+	ctx.JSON(http.StatusOK, cont.response)
+}
+
+func (cont *sale_controller) FetchLeadsByStatus(ctx *gin.Context) {
+	var req dto.FetchAllLeadsRequestDTO
+
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		cont.response = utils.RequestParamsMissingResponse(helper.Handle_required_param_error(err))
+		ctx.JSON(http.StatusBadRequest, cont.response)
+		return
+	}
+
+	result, err := cont.sale_serv.FetchLeadsByStatus(req)
+
+	if err != nil {
+
+		if errors.Is(err, sql.ErrNoRows) {
+			cont.response = utils.BuildFailedResponse("data not found")
+			ctx.JSON(http.StatusNotFound, cont.response)
+			return
+		}
+		cont.response = utils.BuildFailedResponse(err.Error())
+		ctx.JSON(http.StatusInternalServerError, cont.response)
+		return
+	}
+
+	cont.response = utils.BuildResponseWithPagination(utils.FETCHED_SUCCESS, "", utils.SALES_LEAD, result)
 	ctx.JSON(http.StatusOK, cont.response)
 }

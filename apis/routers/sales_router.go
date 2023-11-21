@@ -28,7 +28,9 @@ func SalesRouter(router *gin.Engine, store *apis.Store) {
 	{
 		sales_lead.POST("/sales-lead", sales_controller.CreateNewLead)
 		sales_lead.GET("/sales-lead/:lead_id", sales_controller.FetchLeadByLeadId)
+		sales_lead.GET("/sales-leads/:page_id/:page_size/:status", sales_controller.FetchLeadsByStatus)
 		sales_lead.GET("/sales-leads/:page_id/:page_size", sales_controller.FetchAllLeads)
+		sales_lead.GET("/sale_lead_counts", sales_controller.FetchLeadCounts)
 	}
 
 }

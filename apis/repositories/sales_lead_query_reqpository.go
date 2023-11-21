@@ -53,3 +53,31 @@ func (repo *sale_repo) CountSalesLead() (int64, error) {
 
 	return repo.db.Queries.CountOfLeads(ctx)
 }
+
+func (repo *sale_repo) FetchLeadCounts() (db.FetchLeadCountsRow, error) {
+	ctx, cancel := repo.Init()
+	defer cancel()
+
+	return repo.db.Queries.FetchLeadCounts(ctx)
+}
+
+func (repo *sale_repo) FetchLeadCountMonthWise() ([]db.FetchLeadCountByMonthRow, error) {
+	ctx, cancel := repo.Init()
+	defer cancel()
+
+	return repo.db.Queries.FetchLeadCountByMonth(ctx)
+}
+
+func (repo *sale_repo) FetchLeadsByStatus(args db.FetchLeadsByStatusParams) ([]db.FetchLeadsByStatusRow, error) {
+	ctx, cancel := repo.Init()
+	defer cancel()
+
+	return repo.db.Queries.FetchLeadsByStatus(ctx, args)
+}
+
+func (repo *sale_repo) FetchPGCountLeadsByStatus(status string) (int64, error) {
+	ctx, cancel := repo.Init()
+	defer cancel()
+
+	return repo.db.Queries.PGCountByLeadStatus(ctx, status)
+}

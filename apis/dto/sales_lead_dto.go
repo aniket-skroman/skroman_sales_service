@@ -16,8 +16,14 @@ type CreateNewLeadDTO struct {
 }
 
 type FetchAllLeadsRequestDTO struct {
-	PageId   int `uri:"page_id"`
-	PageSize int `uri:"page_size"`
+	PageId   int    `uri:"page_id"`
+	PageSize int    `uri:"page_size"`
+	Status   string `uri:"status"`
+}
+
+type FetchLeadCountsDTO struct {
+	LeadCount       db.FetchLeadCountsRow         `json:"lead_count"`
+	LeadMonthCounts []db.FetchLeadCountByMonthRow `json:"lead_month_counts"`
 }
 
 type SaleLeadsDetailsDTO struct {

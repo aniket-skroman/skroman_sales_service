@@ -230,6 +230,182 @@ func (q *Queries) FetchLeadByLeadId(ctx context.Context, id uuid.UUID) (FetchLea
 	return i, err
 }
 
+const fetchLeadCountByMonth = `-- name: FetchLeadCountByMonth :many
+with lm as 
+(
+SELECT
+	to_char(d, 'Month') as n_month
+FROM
+    GENERATE_SERIES(
+        now(),
+        now() - interval '12 months',
+        interval '-1 months'
+    ) AS d
+)
+
+
+select  l.n_month as month,
+count(distinct sl.id)
+from lm as l
+left join sale_leads as sl 
+on l.n_month = to_char(sl.created_at, 'Month')
+group by to_char(sl.created_at, 'Month'),l.n_month
+order by l.n_month desc
+`
+
+type FetchLeadCountByMonthRow struct {
+	Month string `json:"month"`
+	Count int64  `json:"count"`
+}
+
+func (q *Queries) FetchLeadCountByMonth(ctx context.Context) ([]FetchLeadCountByMonthRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchLeadCountByMonth)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []FetchLeadCountByMonthRow{}
+	for rows.Next() {
+		var i FetchLeadCountByMonthRow
+		if err := rows.Scan(&i.Month, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchLeadCounts = `-- name: FetchLeadCounts :one
+select (select count(*) from sale_leads where status = 'INIT') as init_leads,
+(select count(*) from sale_leads where status = 'PLACED') as placed_leads,
+(select count(*) from sale_leads where status = 'CANCLED') as cancled_leads,
+(select count(*) from order_quatation where date_trunc('month', created_at) = date_trunc('month', current_date)) as total_quotations,
+count(*) as total_leads     
+from sale_leads
+`
+
+type FetchLeadCountsRow struct {
+	InitLeads       int64 `json:"init_leads"`
+	PlacedLeads     int64 `json:"placed_leads"`
+	CancledLeads    int64 `json:"cancled_leads"`
+	TotalQuotations int64 `json:"total_quotations"`
+	TotalLeads      int64 `json:"total_leads"`
+}
+
+// counts for landing page
+func (q *Queries) FetchLeadCounts(ctx context.Context) (FetchLeadCountsRow, error) {
+	row := q.db.QueryRowContext(ctx, fetchLeadCounts)
+	var i FetchLeadCountsRow
+	err := row.Scan(
+		&i.InitLeads,
+		&i.PlacedLeads,
+		&i.CancledLeads,
+		&i.TotalQuotations,
+		&i.TotalLeads,
+	)
+	return i, err
+}
+
+const fetchLeadsByStatus = `-- name: FetchLeadsByStatus :many
+select sl.id as lead_id,
+sl.lead_by as lead_by, sl.referal_name as referal_name,
+sl.referal_contact as referal_contact, sl.status as status,
+sl.created_at as lead_created_at, sl.updated_at as lead_updated_at,
+sl.is_lead_info as is_lead_info, sl.is_order_info as is_order_info,
+sl.quatation_count as quatation_count, li.id as lead_info_id,
+li.name as name, li.email as email, li.contact as contact,
+li.address_line_1 as address_line_1, li.city as city, li.state as state,
+li.lead_type as lead_type, li.created_at as lead_info_created_at,
+li.updated_at as lead_info_updated_at
+from sale_leads as sl
+inner join lead_info as li 
+on sl.id = li.lead_id
+where sl.status = $1
+order by sl.created_at
+limit $2
+offset $3
+`
+
+type FetchLeadsByStatusParams struct {
+	Status string `json:"status"`
+	Limit  int32  `json:"limit"`
+	Offset int32  `json:"offset"`
+}
+
+type FetchLeadsByStatusRow struct {
+	LeadID            uuid.UUID      `json:"lead_id"`
+	LeadBy            uuid.UUID      `json:"lead_by"`
+	ReferalName       string         `json:"referal_name"`
+	ReferalContact    string         `json:"referal_contact"`
+	Status            string         `json:"status"`
+	LeadCreatedAt     time.Time      `json:"lead_created_at"`
+	LeadUpdatedAt     time.Time      `json:"lead_updated_at"`
+	IsLeadInfo        sql.NullBool   `json:"is_lead_info"`
+	IsOrderInfo       sql.NullBool   `json:"is_order_info"`
+	QuatationCount    sql.NullInt32  `json:"quatation_count"`
+	LeadInfoID        uuid.UUID      `json:"lead_info_id"`
+	Name              string         `json:"name"`
+	Email             sql.NullString `json:"email"`
+	Contact           string         `json:"contact"`
+	AddressLine1      sql.NullString `json:"address_line_1"`
+	City              sql.NullString `json:"city"`
+	State             sql.NullString `json:"state"`
+	LeadType          sql.NullString `json:"lead_type"`
+	LeadInfoCreatedAt time.Time      `json:"lead_info_created_at"`
+	LeadInfoUpdatedAt time.Time      `json:"lead_info_updated_at"`
+}
+
+// lead by status
+func (q *Queries) FetchLeadsByStatus(ctx context.Context, arg FetchLeadsByStatusParams) ([]FetchLeadsByStatusRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchLeadsByStatus, arg.Status, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []FetchLeadsByStatusRow{}
+	for rows.Next() {
+		var i FetchLeadsByStatusRow
+		if err := rows.Scan(
+			&i.LeadID,
+			&i.LeadBy,
+			&i.ReferalName,
+			&i.ReferalContact,
+			&i.Status,
+			&i.LeadCreatedAt,
+			&i.LeadUpdatedAt,
+			&i.IsLeadInfo,
+			&i.IsOrderInfo,
+			&i.QuatationCount,
+			&i.LeadInfoID,
+			&i.Name,
+			&i.Email,
+			&i.Contact,
+			&i.AddressLine1,
+			&i.City,
+			&i.State,
+			&i.LeadType,
+			&i.LeadInfoCreatedAt,
+			&i.LeadInfoUpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const increaeQuatationCount = `-- name: IncreaeQuatationCount :execrows
 update sale_leads
 set quatation_count = quatation_count + 1,
@@ -244,6 +420,21 @@ func (q *Queries) IncreaeQuatationCount(ctx context.Context, id uuid.UUID) (int6
 		return 0, err
 	}
 	return result.RowsAffected()
+}
+
+const pGCountByLeadStatus = `-- name: PGCountByLeadStatus :one
+select count(*) from sale_leads as sl 
+inner join lead_info as li 
+on sl.id = li.lead_id 
+where status = $1
+`
+
+// lead count by status
+func (q *Queries) PGCountByLeadStatus(ctx context.Context, status string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, pGCountByLeadStatus, status)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const updateIsLeadInfo = `-- name: UpdateIsLeadInfo :one

@@ -20,6 +20,8 @@ type SalesLeadService interface {
 	FetchAllLeads(req dto.FetchAllLeadsRequestDTO) (interface{}, error)
 	FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, error)
 	IncreaeQuatationCount(lead_id uuid.UUID) error
+	FetchLeadCounts() (dto.FetchLeadCountsDTO, error)
+	FetchLeadsByStatus(req dto.FetchAllLeadsRequestDTO) (interface{}, error)
 }
 
 type sale_service struct {
@@ -236,4 +238,118 @@ func (ser *sale_service) IncreaeQuatationCount(lead_id uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (ser *sale_service) FetchLeadCounts() (dto.FetchLeadCountsDTO, error) {
+	wg := sync.WaitGroup{}
+	err_chan := make(chan error)
+	result := dto.FetchLeadCountsDTO{}
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		counts, err := ser.sale_lead_repo.FetchLeadCounts()
+
+		if err != nil {
+			err_chan <- err
+			return
+		}
+
+		result.LeadCount = counts
+
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		counts, err := ser.sale_lead_repo.FetchLeadCountMonthWise()
+		if err != nil {
+			err_chan <- err
+			return
+		}
+		result.LeadMonthCounts = counts
+	}()
+
+	go func() {
+		wg.Wait()
+		close(err_chan)
+	}()
+
+	for err_data := range err_chan {
+		return dto.FetchLeadCountsDTO{}, err_data
+	}
+
+	return result, nil
+}
+
+func (ser *sale_service) FetchLeadsByStatus(req dto.FetchAllLeadsRequestDTO) (interface{}, error) {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	var err error
+	var result []db.FetchLeadsByStatusRow
+	sales_lead := []dto.SaleLeadsDTO{}
+	go func() {
+		defer wg.Done()
+		args := db.FetchLeadsByStatusParams{
+			Limit:  int32(req.PageSize),
+			Offset: (int32(req.PageId) - 1) * int32(req.PageSize),
+			Status: req.Status,
+		}
+
+		result, err = ser.sale_lead_repo.FetchLeadsByStatus(args)
+
+		if err != nil {
+			return
+		}
+
+		for i := range result {
+			temp := dto.SaleLeadsDTO{
+				ID:             result[i].LeadID,
+				LeadBy:         result[i].LeadBy,
+				ReferalName:    result[i].ReferalName,
+				ReferalContact: result[i].ReferalContact,
+				Status:         result[i].Status,
+				QuatationCount: result[i].QuatationCount.Int32,
+				CreatedAt:      result[i].LeadCreatedAt,
+				UpdatedAt:      result[i].LeadUpdatedAt,
+				IsLeadInfo:     result[i].IsLeadInfo.Bool,
+				IsOrderInfo:    result[i].IsOrderInfo.Bool,
+				LeadInfo: &dto.GetLeadInfoDTO{
+					ID:           result[i].LeadInfoID,
+					Name:         result[i].Name,
+					Email:        result[i].Email.String,
+					Contact:      result[i].Contact,
+					AddressLine1: result[i].AddressLine1.String,
+					City:         result[i].City.String,
+					State:        result[i].State.String,
+					LeadType:     result[i].LeadType.String,
+					CreatedAt:    result[i].LeadInfoCreatedAt,
+					UpdatedAt:    result[i].LeadInfoUpdatedAt,
+				},
+			}
+			if (reflect.DeepEqual(temp.LeadInfo, &dto.GetLeadInfoDTO{})) {
+				temp.LeadInfo = nil
+			} else {
+				temp.LeadInfo.LeadID = result[i].LeadID
+			}
+			sales_lead = append(sales_lead, temp)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		count, _ := ser.sale_lead_repo.FetchPGCountLeadsByStatus(req.Status)
+		helper.SetPaginationData(req.PageId, count)
+	}()
+
+	wg.Wait()
+
+	if err != nil {
+		return nil, err
+	}
+	if len(result) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	return sales_lead, err
 }

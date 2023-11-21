@@ -18,6 +18,10 @@ type SalesRepository interface {
 	FetchLeadByLeadId(lead_id uuid.UUID) (db.FetchLeadByLeadIdRow, error)
 	IncreaeQuatationCount(lead_id uuid.UUID) (int64, error)
 	CountSalesLead() (int64, error)
+	FetchLeadCounts() (db.FetchLeadCountsRow, error)
+	FetchLeadCountMonthWise() ([]db.FetchLeadCountByMonthRow, error)
+	FetchLeadsByStatus(args db.FetchLeadsByStatusParams) ([]db.FetchLeadsByStatusRow, error)
+	FetchPGCountLeadsByStatus(status string) (int64, error)
 }
 
 type sale_repo struct {

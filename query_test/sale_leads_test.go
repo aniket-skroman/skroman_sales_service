@@ -143,6 +143,52 @@ func TestFetchLeadById(t *testing.T) {
 
 }
 
+func TestFetchLeadCounts(t *testing.T) {
+	result, err := testQueries.FetchLeadCounts(context.Background())
+
+	require.NoError(t, err)
+	require.NotEmpty(t, result)
+
+	print("Init Leads : ", result.InitLeads)
+	print("Placed Leads : ", result.PlacedLeads)
+	print("Total Leads : ", result.TotalLeads)
+	print("Total Quotations count : ", result.TotalQuotations)
+	print("Cancled Leads : ", result.CancledLeads)
+
+	month_data, err := testQueries.FetchLeadCountByMonth(context.Background())
+
+	require.NoError(t, err)
+	require.NotEmpty(t, month_data)
+
+	for i := range month_data {
+		fmt.Printf("Month : %s and month count : %d \n", month_data[i].Month, month_data[i].Count)
+		// print("Month : ", month_data[i].Month, " nam")
+	}
+}
+
+func TestFetchLeadsByStatus(t *testing.T) {
+	args := db.FetchLeadsByStatusParams{
+		Status: "INIT",
+		Limit:  1,
+		Offset: 0,
+	}
+
+	result, err := testQueries.FetchLeadsByStatus(context.Background(), args)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, result)
+
+	print("Data len nn : ", len(result))
+
+	count, err := testQueries.PGCountByLeadStatus(context.Background(), "INIT")
+
+	require.NoError(t, err)
+	require.NotZero(t, count)
+
+	print("count : ", count)
+
+}
+
 func print(args ...interface{}) {
 	fmt.Println("DEBUG : ", args)
 }
