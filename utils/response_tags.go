@@ -44,5 +44,4 @@ const DATA = "app_data"
 
 var SALES_LEAD = "lead_data"
 
-// ---------------------------- COMPLAINTS --------------------------------- //
-const COMPLAINT_CREATED = "complaint has been created"
+var QUOTATION_PATH_URL = "http://15.207.19.172:9000/api/device-file/"

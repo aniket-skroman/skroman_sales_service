@@ -2,10 +2,12 @@ package services
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/dto"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/helper"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/repositories"
+	"github.com/aniket-skroman/skroman_sales_service.git/connections"
 	db "github.com/aniket-skroman/skroman_sales_service.git/sqlc_lib"
 	"github.com/google/uuid"
 )
@@ -16,6 +18,8 @@ type LeadOrderService interface {
 	DeleteLeadOrder(req dto.DeleteLeadOrderRequestDTO) error
 	UpdateLeadOrder(req dto.UpdateLeadOrderRequestDTO, order_id string) (dto.LeadOrderDTO, error)
 	FetchOrdersByOrderId(order_id string) (dto.LeadOrderDTO, error)
+	UploadOrderQuatation(req dto.UploadOrderQuatationRequestDTO) error
+	FetchQuatationByLeadId(lead_id uuid.UUID) ([]db.OrderQuatation, error)
 }
 
 type lead_order_serv struct {
@@ -56,11 +60,6 @@ func (serv *lead_order_serv) CreateLeadOrder(req dto.CreateLeadOrderRequestDTO) 
 }
 
 func (serv *lead_order_serv) FetchOrdersByLeadId(lead_id uuid.UUID) ([]dto.LeadOrderDTO, error) {
-	// lead_obj_id, err := uuid.Parse(lead_id)
-
-	// if err != nil {
-	// 	return nil, helper.ERR_INVALID_ID
-	// }
 
 	args := uuid.NullUUID{UUID: lead_id, Valid: true}
 
@@ -156,4 +155,33 @@ func (serv *lead_order_serv) FetchOrdersByOrderId(order_id string) (dto.LeadOrde
 	result, err := serv.order_repo.FetchOrdersByOrderId(order_obj_id)
 
 	return new(dto.LeadOrderDTO).MakeLeadOrderDTO(result).(dto.LeadOrderDTO), err
+}
+
+func (serv *lead_order_serv) UploadOrderQuatation(req dto.UploadOrderQuatationRequestDTO) error {
+	// upload a file first
+	s3_connection := connections.NewS3Connection()
+	path, err := s3_connection.UploadOrderQuatation(req.QuatationFile, &req.FileHandler)
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("File Path has been generated : ", path)
+	// setting a file path to process with DB
+	req.QuatationLink = path
+
+	// prepare for args
+	args := db.CreateNewOrderQuatationParams{
+		LeadID:        req.LeadId,
+		GeneratedBy:   req.GeneratedBy,
+		QuatationLink: req.QuatationLink,
+	}
+
+	err = serv.order_repo.UploadOrderQuatation(args)
+	return err
+}
+
+func (serv *lead_order_serv) FetchQuatationByLeadId(lead_id uuid.UUID) ([]db.OrderQuatation, error) {
+
+	return serv.order_repo.FetchOrderQutationsByLeadId(lead_id)
 }

@@ -19,6 +19,7 @@ type LeadOrderController interface {
 	DeleteLeadOrder(*gin.Context)
 	UpdateLeadOrder(*gin.Context)
 	FetchLeadOrderByOrderId(*gin.Context)
+	UploadOrderQuatation(ctx *gin.Context)
 }
 
 type lead_order_cont struct {
@@ -165,4 +166,61 @@ func (cont *lead_order_cont) FetchLeadOrderByOrderId(ctx *gin.Context) {
 
 	cont.response = utils.BuildSuccessResponse(utils.FETCHED_SUCCESS, utils.SALES_LEAD, result)
 	ctx.JSON(http.StatusOK, cont.response)
+}
+
+func (cont *lead_order_cont) UploadOrderQuatation(ctx *gin.Context) {
+
+	file, handler, err := ctx.Request.FormFile("order_qutation")
+
+	if err != nil {
+		cont.response = utils.BuildFailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, cont.response)
+		return
+	}
+
+	lead_id := ctx.PostForm("lead_id")
+
+	if lead_id == "" {
+		cont.response = utils.RequestParamsMissingResponse(utils.REQUIRED_PARAMS)
+		ctx.JSON(http.StatusBadRequest, cont.response)
+		return
+	}
+
+	// id's should be valid
+	lead_obj_id, _ := is_valid_id(lead_id)
+	generated_by_obj, _ := is_valid_id(utils.TOKEN_ID)
+
+	if lead_obj_id == uuid.Nil || generated_by_obj == uuid.Nil {
+		cont.response = utils.BuildFailedResponse(helper.ERR_INVALID_ID.Error())
+		ctx.JSON(http.StatusUnprocessableEntity, cont.response)
+		return
+	}
+
+	req := dto.UploadOrderQuatationRequestDTO{
+		LeadId:        lead_obj_id,
+		GeneratedBy:   generated_by_obj,
+		QuatationFile: file,
+		FileHandler:   *handler,
+	}
+
+	err = cont.serv.UploadOrderQuatation(req)
+
+	if err != nil {
+		cont.response = utils.BuildFailedResponse(err.Error())
+		ctx.JSON(http.StatusInternalServerError, cont.response)
+		return
+	}
+
+	cont.response = utils.BuildSuccessResponse("order qutation has been uploaded", utils.SALES_LEAD, nil)
+	ctx.JSON(http.StatusCreated, cont.response)
+}
+
+func is_valid_id(ids string) (uuid.UUID, bool) {
+	obj_id, err := uuid.Parse(ids)
+
+	if err != nil {
+		return uuid.Nil, false
+	}
+
+	return obj_id, true
 }

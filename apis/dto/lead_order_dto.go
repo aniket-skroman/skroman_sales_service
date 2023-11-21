@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"mime/multipart"
 	"time"
 
 	db "github.com/aniket-skroman/skroman_sales_service.git/sqlc_lib"
@@ -28,6 +29,15 @@ type UpdateLeadOrderRequestDTO struct {
 	DevicePrice int32  `json:"device_price" binding:"required"`
 	Quantity    int32  `json:"quantity" binding:"required"`
 	DeviceName  string `json:"device_name"`
+}
+
+// struct will be used only for internal, this will not communicate to request
+type UploadOrderQuatationRequestDTO struct {
+	LeadId        uuid.UUID
+	GeneratedBy   uuid.UUID
+	QuatationLink string
+	QuatationFile multipart.File
+	FileHandler   multipart.FileHeader
 }
 
 type LeadOrderDTO struct {

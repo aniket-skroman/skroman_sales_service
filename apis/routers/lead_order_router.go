@@ -27,7 +27,11 @@ func LeadOrderRouter(route *gin.Engine, db *apis.Store) {
 		lead_order.GET("/lead_order/order/:order_id", lead_order_cont.FetchLeadOrderByOrderId)
 		lead_order.DELETE("/lead_order", lead_order_cont.DeleteLeadOrder)
 		lead_order.PUT("/lead_order/:order_id", lead_order_cont.UpdateLeadOrder)
+	}
 
+	order_quatation := route.Group("/api", middleware.AuthorizeJWT(jwt_servive))
+	{
+		order_quatation.POST("/order_quatation", lead_order_cont.UploadOrderQuatation)
 	}
 
 }

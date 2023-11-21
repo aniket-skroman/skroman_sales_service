@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 	"sync"
@@ -73,6 +74,10 @@ func (ser *sale_service) FetchAllLeads(req dto.FetchAllLeadsRequestDTO) (interfa
 
 		result, err = ser.sale_lead_repo.FetchAllLeads(args)
 
+		if err != nil {
+			return
+		}
+
 		for i := range result {
 			temp := dto.SaleLeadsDTO{
 				ID:             result[i].LeadID,
@@ -123,33 +128,27 @@ func (ser *sale_service) FetchAllLeads(req dto.FetchAllLeadsRequestDTO) (interfa
 	}
 
 	return sales_lead, err
-	// data := new(dto.SaleLeadsDTO).MakeSaleLeadsDTO(result...)
-	// if _, ok := data.(dto.SaleLeadsDTO); ok {
-	// 	return []dto.SaleLeadsDTO{data.(dto.SaleLeadsDTO)}, nil
-	// }
-
-	//return data, nil
 }
 
 func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, error) {
 
 	wg := sync.WaitGroup{}
-	wg.Add(2)
-	var lead db.FetchLeadByLeadIdRow
+	wg.Add(3)
+
 	result := dto.SaleLeadsDTO{}
-	var err error
-	var orders []dto.LeadOrderDTO
+	err_chan := make(chan error)
 
 	go func() {
 		defer wg.Done()
-		lead, err = ser.sale_lead_repo.FetchLeadByLeadId(lead_id)
+		lead, err := ser.sale_lead_repo.FetchLeadByLeadId(lead_id)
 
 		if err != nil {
+			err_chan <- err
 			return
 		}
 
 		if (reflect.DeepEqual(lead, db.SaleLeads{})) {
-			err = errors.New("lead not found")
+			err_chan <- sql.ErrNoRows
 			return
 		}
 
@@ -181,19 +180,43 @@ func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, erro
 
 	go func() {
 		defer wg.Done()
-		orders, err = ser.lead_order_serv.FetchOrdersByLeadId(lead_id)
+		orders, err := ser.lead_order_serv.FetchOrdersByLeadId(lead_id)
 		if err != nil {
-			result.LeadOrders = &[]dto.LeadOrderDTO{}
-		} else {
-			result.LeadOrders = &orders
+			err_chan <- err
+			return
 		}
 		result.LeadOrders = &orders
+
 	}()
 
-	wg.Wait()
+	go func() {
+		defer wg.Done()
+		order_result, err := ser.lead_order_serv.FetchQuatationByLeadId(lead_id)
 
-	if err != nil {
-		return dto.SaleLeadsDTO{}, err
+		if err != nil {
+			err_chan <- err
+			return
+		}
+
+		quotations := make([]dto.OrderQuatation, len(order_result))
+		for i := range order_result {
+			quotations[i] = dto.OrderQuatation{
+				QuotationLink: fmt.Sprintf("http://15.207.19.172:9000/api/quotations/%s", order_result[i].QuatationLink),
+				CreatedAt:     order_result[i].CreatedAt,
+				UpdatedAt:     order_result[i].UpdatedAt,
+			}
+		}
+
+		result.OrderQuatations = &quotations
+	}()
+
+	go func() {
+		wg.Wait()
+		close(err_chan)
+	}()
+
+	for data_err := range err_chan {
+		return nil, data_err
 	}
 
 	return result, nil

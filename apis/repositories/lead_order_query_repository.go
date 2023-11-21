@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"errors"
 
 	db "github.com/aniket-skroman/skroman_sales_service.git/sqlc_lib"
 	"github.com/google/uuid"
@@ -121,4 +122,56 @@ func (repo *lead_order_repo) FetchOrdersByOrderId(order_id uuid.UUID) (db.LeadOr
 	defer cancel()
 
 	return repo.db.Queries.FetchLeadOrderByOrderId(ctx, order_id)
+}
+
+func (repo *lead_order_repo) UploadOrderQuatation(args db.CreateNewOrderQuatationParams) error {
+	// make a db transaction
+	tx, err := repo.db.DBTransaction()
+
+	if err != nil {
+		return err
+	}
+
+	txq := repo.db.WithTx(tx)
+
+	ctx, cancel := repo.Init()
+	defer cancel()
+
+	// create a new order quatation
+	_, err = txq.CreateNewOrderQuatation(ctx, args)
+
+	if err != nil {
+		return err
+	}
+
+	// then update the quatation count
+	result, err := txq.IncreaeQuatationCount(ctx, args.LeadID)
+
+	if err != nil {
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+
+		return err
+	}
+
+	if result == 0 {
+		err := tx.Rollback()
+		if err != nil {
+			return err
+		}
+
+		return errors.New("failed to upload qutation")
+	}
+
+	err = tx.Commit()
+
+	return err
+}
+
+func (repo *lead_order_repo) FetchOrderQutationsByLeadId(lead_id uuid.UUID) ([]db.OrderQuatation, error) {
+	ctx, cancel := repo.Init()
+	defer cancel()
+
+	return repo.db.Queries.FetchQuatationByLeadId(ctx, lead_id)
 }
