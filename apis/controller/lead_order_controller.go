@@ -20,6 +20,7 @@ type LeadOrderController interface {
 	UpdateLeadOrder(*gin.Context)
 	FetchLeadOrderByOrderId(*gin.Context)
 	UploadOrderQuatation(ctx *gin.Context)
+	DeleteQuotation(ctx *gin.Context)
 }
 
 type lead_order_cont struct {
@@ -213,6 +214,35 @@ func (cont *lead_order_cont) UploadOrderQuatation(ctx *gin.Context) {
 
 	cont.response = utils.BuildSuccessResponse("order qutation has been uploaded", utils.SALES_LEAD, nil)
 	ctx.JSON(http.StatusCreated, cont.response)
+}
+
+func (cont *lead_order_cont) DeleteQuotation(ctx *gin.Context) {
+	var req dto.DeleteOrderQuotationRequestDTO
+
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		cont.response = utils.BuildFailedResponse(helper.Handle_required_param_error(err))
+		ctx.JSON(http.StatusBadRequest, cont.response)
+		return
+	}
+
+	err := cont.serv.DeleteQuotation(req)
+
+	if err != nil {
+		cont.response = utils.BuildFailedResponse(err.Error())
+		if errors.Is(err, helper.ERR_INVALID_ID) {
+			ctx.JSON(http.StatusBadRequest, cont.response)
+			return
+		} else if errors.Is(err, sql.ErrNoRows) {
+			cont.response = utils.BuildFailedResponse(errors.New("quotation not found to delete").Error())
+			ctx.JSON(http.StatusNotFound, cont.response)
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, cont.response)
+		return
+	}
+
+	cont.response = utils.BuildSuccessResponse(utils.DELETE_SUCCESS, utils.SALES_LEAD, nil)
+	ctx.JSON(http.StatusOK, cont.response)
 }
 
 func is_valid_id(ids string) (uuid.UUID, bool) {

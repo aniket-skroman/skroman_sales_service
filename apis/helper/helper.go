@@ -40,7 +40,12 @@ func SetPaginationData(page int, total int64) {
 }
 
 func ValidateUUID(input_id string) (uuid.UUID, error) {
-	return uuid.Parse(input_id)
+	obj_id, err := uuid.Parse(input_id)
+
+	if err != nil {
+		return uuid.Nil, ERR_INVALID_ID
+	}
+	return obj_id, nil
 }
 
 type ApiError struct {

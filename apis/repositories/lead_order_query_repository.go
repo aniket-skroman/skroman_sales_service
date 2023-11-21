@@ -175,3 +175,17 @@ func (repo *lead_order_repo) FetchOrderQutationsByLeadId(lead_id uuid.UUID) ([]d
 
 	return repo.db.Queries.FetchQuatationByLeadId(ctx, lead_id)
 }
+
+func (repo *lead_order_repo) DeleteQuotation(args db.DeleteOrderQuotationParams) (sql.Result, error) {
+	ctx, cancel := repo.Init()
+	defer cancel()
+
+	return repo.db.Queries.DeleteOrderQuotation(ctx, args)
+}
+
+func (repo *lead_order_repo) FetchQuotationById(quotation_id uuid.UUID) (db.OrderQuatation, error) {
+	ctx, cancel := repo.Init()
+	defer cancel()
+
+	return repo.db.Queries.FetchQuotationById(ctx, quotation_id)
+}

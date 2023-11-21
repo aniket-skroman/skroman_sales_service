@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -40,6 +41,21 @@ func (q *Queries) CreateNewOrderQuatation(ctx context.Context, arg CreateNewOrde
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const deleteOrderQuotation = `-- name: DeleteOrderQuotation :execresult
+delete from order_quatation
+where id = $1 and lead_id = $2
+`
+
+type DeleteOrderQuotationParams struct {
+	ID     uuid.UUID `json:"id"`
+	LeadID uuid.UUID `json:"lead_id"`
+}
+
+// delete order quotation by lead_id and quotation id
+func (q *Queries) DeleteOrderQuotation(ctx context.Context, arg DeleteOrderQuotationParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteOrderQuotation, arg.ID, arg.LeadID)
 }
 
 const fetchQuatationByLeadId = `-- name: FetchQuatationByLeadId :many
@@ -76,4 +92,25 @@ func (q *Queries) FetchQuatationByLeadId(ctx context.Context, leadID uuid.UUID) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const fetchQuotationById = `-- name: FetchQuotationById :one
+select id, lead_id, generated_by, quatation_link, created_at, updated_at from order_quatation
+where id = $1
+limit 1
+`
+
+// fetch quotation by quotation id
+func (q *Queries) FetchQuotationById(ctx context.Context, id uuid.UUID) (OrderQuatation, error) {
+	row := q.db.QueryRowContext(ctx, fetchQuotationById, id)
+	var i OrderQuatation
+	err := row.Scan(
+		&i.ID,
+		&i.LeadID,
+		&i.GeneratedBy,
+		&i.QuatationLink,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

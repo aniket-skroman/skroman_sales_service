@@ -45,3 +45,7 @@ func TestFetchOrderQutationsByLeadId(t *testing.T) {
 		fmt.Println("Quatation : ", path)
 	}
 }
+
+func TestDeleteOrderQuotation(t *testing.T) {
+
+}

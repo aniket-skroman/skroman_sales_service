@@ -2,7 +2,6 @@ package services
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/dto"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/helper"
@@ -20,6 +19,7 @@ type LeadOrderService interface {
 	FetchOrdersByOrderId(order_id string) (dto.LeadOrderDTO, error)
 	UploadOrderQuatation(req dto.UploadOrderQuatationRequestDTO) error
 	FetchQuatationByLeadId(lead_id uuid.UUID) ([]db.OrderQuatation, error)
+	DeleteQuotation(req dto.DeleteOrderQuotationRequestDTO) error
 }
 
 type lead_order_serv struct {
@@ -166,7 +166,6 @@ func (serv *lead_order_serv) UploadOrderQuatation(req dto.UploadOrderQuatationRe
 		return err
 	}
 
-	fmt.Println("File Path has been generated : ", path)
 	// setting a file path to process with DB
 	req.QuatationLink = path
 
@@ -184,4 +183,49 @@ func (serv *lead_order_serv) UploadOrderQuatation(req dto.UploadOrderQuatationRe
 func (serv *lead_order_serv) FetchQuatationByLeadId(lead_id uuid.UUID) ([]db.OrderQuatation, error) {
 
 	return serv.order_repo.FetchOrderQutationsByLeadId(lead_id)
+}
+
+// delete a quotation
+func (ser *lead_order_serv) DeleteQuotation(req dto.DeleteOrderQuotationRequestDTO) error {
+	// validate id's
+	lead_obj_id, err := helper.ValidateUUID(req.LeadId)
+
+	if err != nil {
+		return err
+	}
+
+	quotation_obj_id, err := helper.ValidateUUID(req.QuotationId)
+
+	if err != nil {
+		return err
+	}
+
+	// fetch file path
+	quotation, err := ser.order_repo.FetchQuotationById(quotation_obj_id)
+
+	if err != nil {
+		return err
+	}
+
+	if quotation.QuatationLink == "" {
+		return sql.ErrNoRows
+	}
+
+	// delete first file from remote server
+	s3_connection := connections.NewS3Connection()
+	err = s3_connection.DeleteFiles(quotation.QuatationLink)
+
+	if err != nil {
+		return err
+	}
+
+	//  then remove file ref
+	args := db.DeleteOrderQuotationParams{
+		LeadID: lead_obj_id,
+		ID:     quotation_obj_id,
+	}
+
+	_, err = ser.order_repo.DeleteQuotation(args)
+
+	return err
 }

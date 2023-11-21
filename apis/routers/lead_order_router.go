@@ -31,7 +31,8 @@ func LeadOrderRouter(route *gin.Engine, db *apis.Store) {
 
 	order_quatation := route.Group("/api", middleware.AuthorizeJWT(jwt_servive))
 	{
-		order_quatation.POST("/order_quatation", lead_order_cont.UploadOrderQuatation)
+		order_quatation.POST("/order_quotation", lead_order_cont.UploadOrderQuatation)
+		order_quatation.DELETE("/order_quotation", lead_order_cont.DeleteQuotation)
 	}
 
 }

@@ -19,6 +19,8 @@ type LeadOrderRepository interface {
 	FetchOrdersByOrderId(order_id uuid.UUID) (db.LeadOrder, error)
 	UploadOrderQuatation(args db.CreateNewOrderQuatationParams) error
 	FetchOrderQutationsByLeadId(lead_id uuid.UUID) ([]db.OrderQuatation, error)
+	DeleteQuotation(args db.DeleteOrderQuotationParams) (sql.Result, error)
+	FetchQuotationById(quotation_id uuid.UUID) (db.OrderQuatation, error)
 }
 
 type lead_order_repo struct {

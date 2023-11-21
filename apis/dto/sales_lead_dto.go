@@ -33,6 +33,7 @@ type SaleLeadsDetailsDTO struct {
 }
 
 type OrderQuatation struct {
+	ID            uuid.UUID `json:"id"`
 	QuotationLink string    `json:"quotation_link"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`

@@ -201,6 +201,7 @@ func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, erro
 		quotations := make([]dto.OrderQuatation, len(order_result))
 		for i := range order_result {
 			quotations[i] = dto.OrderQuatation{
+				ID:            order_result[i].ID,
 				QuotationLink: fmt.Sprintf("http://15.207.19.172:9000/api/quotations/%s", order_result[i].QuatationLink),
 				CreatedAt:     order_result[i].CreatedAt,
 				UpdatedAt:     order_result[i].UpdatedAt,

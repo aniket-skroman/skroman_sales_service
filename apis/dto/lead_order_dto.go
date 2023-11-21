@@ -40,6 +40,12 @@ type UploadOrderQuatationRequestDTO struct {
 	FileHandler   multipart.FileHeader
 }
 
+// delete order quotation
+type DeleteOrderQuotationRequestDTO struct {
+	LeadId      string `form:"lead_id" binding:"required"`
+	QuotationId string `form:"quotation_id" binding:"required"`
+}
+
 type LeadOrderDTO struct {
 	ID          uuid.UUID     `json:"id"`
 	LeadID      uuid.NullUUID `json:"lead_id"`
