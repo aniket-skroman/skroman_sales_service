@@ -172,7 +172,7 @@ li.address_line_1 as address_line_1, li.city as city, li.state as state,
 li.lead_type as lead_type, li.created_at as lead_info_created_at,
 li.updated_at as lead_info_updated_at
 from sale_leads as sl
-inner join lead_info as li 
+left join lead_info as li 
 on sl.id = li.lead_id
 where sl.id = $1
 limit 1
@@ -189,16 +189,16 @@ type FetchLeadByLeadIdRow struct {
 	IsLeadInfo        sql.NullBool   `json:"is_lead_info"`
 	IsOrderInfo       sql.NullBool   `json:"is_order_info"`
 	QuatationCount    sql.NullInt32  `json:"quatation_count"`
-	LeadInfoID        uuid.UUID      `json:"lead_info_id"`
-	Name              string         `json:"name"`
+	LeadInfoID        uuid.NullUUID  `json:"lead_info_id"`
+	Name              sql.NullString `json:"name"`
 	Email             sql.NullString `json:"email"`
-	Contact           string         `json:"contact"`
+	Contact           sql.NullString `json:"contact"`
 	AddressLine1      sql.NullString `json:"address_line_1"`
 	City              sql.NullString `json:"city"`
 	State             sql.NullString `json:"state"`
 	LeadType          sql.NullString `json:"lead_type"`
-	LeadInfoCreatedAt time.Time      `json:"lead_info_created_at"`
-	LeadInfoUpdatedAt time.Time      `json:"lead_info_updated_at"`
+	LeadInfoCreatedAt sql.NullTime   `json:"lead_info_created_at"`
+	LeadInfoUpdatedAt sql.NullTime   `json:"lead_info_updated_at"`
 }
 
 // fetch lead by id
@@ -423,9 +423,7 @@ func (q *Queries) IncreaeQuatationCount(ctx context.Context, id uuid.UUID) (int6
 }
 
 const pGCountByLeadStatus = `-- name: PGCountByLeadStatus :one
-select count(*) from sale_leads as sl 
-inner join lead_info as li 
-on sl.id = li.lead_id 
+select count(*) from sale_leads
 where status = $1
 `
 

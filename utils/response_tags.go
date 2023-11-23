@@ -44,4 +44,4 @@ const DATA = "app_data"
 
 var SALES_LEAD = "lead_data"
 
-var QUOTATION_PATH_URL = "http://15.207.19.172:9000/api/device-file/"
+var QUOTATION_PATH_URL = "http://15.207.19.172:9000/api/quotations/"

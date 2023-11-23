@@ -57,7 +57,7 @@ li.address_line_1 as address_line_1, li.city as city, li.state as state,
 li.lead_type as lead_type, li.created_at as lead_info_created_at,
 li.updated_at as lead_info_updated_at
 from sale_leads as sl
-inner join lead_info as li 
+left join lead_info as li 
 on sl.id = li.lead_id
 where sl.id = $1
 limit 1;
@@ -134,7 +134,5 @@ offset $3
 
 /* lead count by status */
 -- name: PGCountByLeadStatus :one
-select count(*) from sale_leads as sl 
-inner join lead_info as li 
-on sl.id = li.lead_id 
+select count(*) from sale_leads
 where status = $1;

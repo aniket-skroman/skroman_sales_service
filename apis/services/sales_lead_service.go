@@ -3,7 +3,6 @@ package services
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"reflect"
 	"strconv"
 	"sync"
@@ -12,6 +11,7 @@ import (
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/helper"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/repositories"
 	db "github.com/aniket-skroman/skroman_sales_service.git/sqlc_lib"
+	"github.com/aniket-skroman/skroman_sales_service.git/utils"
 	"github.com/google/uuid"
 )
 
@@ -146,14 +146,8 @@ func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, erro
 	go func() {
 		defer wg.Done()
 		lead, err := ser.sale_lead_repo.FetchLeadByLeadId(lead_id)
-
 		if err != nil {
 			err_chan <- err
-			return
-		}
-
-		if (reflect.DeepEqual(lead, &db.SaleLeads{})) {
-			err_chan <- sql.ErrNoRows
 			return
 		}
 
@@ -168,18 +162,20 @@ func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, erro
 		result.CreatedAt = lead.LeadCreatedAt
 		result.UpdatedAt = lead.LeadUpdatedAt
 
-		result.LeadInfo = &dto.GetLeadInfoDTO{
-			ID:           lead.LeadInfoID,
-			LeadID:       lead_id,
-			Name:         lead.Name,
-			Email:        lead.Email.String,
-			Contact:      lead.Contact,
-			AddressLine1: lead.AddressLine1.String,
-			City:         lead.City.String,
-			State:        lead.State.String,
-			LeadType:     lead.LeadType.String,
-			CreatedAt:    lead.LeadInfoCreatedAt,
-			UpdatedAt:    lead.LeadInfoUpdatedAt,
+		if lead.LeadInfoID.UUID != uuid.Nil {
+			result.LeadInfo = &dto.GetLeadInfoDTO{
+				ID:           lead.LeadInfoID.UUID,
+				LeadID:       lead_id,
+				Name:         lead.Name.String,
+				Email:        lead.Email.String,
+				Contact:      lead.Contact.String,
+				AddressLine1: lead.AddressLine1.String,
+				City:         lead.City.String,
+				State:        lead.State.String,
+				LeadType:     lead.LeadType.String,
+				CreatedAt:    lead.LeadInfoCreatedAt.Time,
+				UpdatedAt:    lead.LeadInfoUpdatedAt.Time,
+			}
 		}
 	}()
 
@@ -191,7 +187,6 @@ func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, erro
 			return
 		}
 		result.LeadOrders = &orders
-
 	}()
 
 	go func() {
@@ -207,13 +202,15 @@ func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, erro
 		for i := range order_result {
 			quotations[i] = dto.OrderQuatation{
 				ID:            order_result[i].ID,
-				QuotationLink: fmt.Sprintf("http://15.207.19.172:9000/api/quotations/%s", order_result[i].QuatationLink),
+				QuotationLink: utils.QUOTATION_PATH_URL + order_result[i].QuatationLink,
 				CreatedAt:     order_result[i].CreatedAt,
 				UpdatedAt:     order_result[i].UpdatedAt,
 			}
 		}
 
-		result.OrderQuatations = &quotations
+		if len(quotations) != 0 {
+			result.OrderQuatations = &quotations
+		}
 	}()
 
 	go func() {
@@ -222,7 +219,9 @@ func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, erro
 	}()
 
 	for data_err := range err_chan {
-		return nil, data_err
+		if data_err != sql.ErrNoRows {
+			return nil, data_err
+		}
 	}
 
 	return result, nil

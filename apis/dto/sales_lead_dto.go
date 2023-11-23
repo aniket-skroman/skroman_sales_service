@@ -18,7 +18,7 @@ type CreateNewLeadDTO struct {
 type FetchAllLeadsRequestDTO struct {
 	PageId   int    `uri:"page_id"`
 	PageSize int    `uri:"page_size"`
-	Status   string `uri:"status"`
+	Status   string `uri:"status" binding:"required,oneof=INIT PLACED CANCEL"`
 }
 
 type FetchLeadCountsDTO struct {
