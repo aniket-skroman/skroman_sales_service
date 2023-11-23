@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 
+	"github.com/aniket-skroman/skroman_sales_service.git/apis/helper"
 	"github.com/aniket-skroman/skroman_sales_service.git/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -16,7 +17,7 @@ func ValidateRequest(ctx *gin.Context) {
 	}
 	lead_id, err := uuid.Parse(id)
 	if err != nil {
-		response := utils.BuildFailedResponse("new error from middleware")
+		response := utils.BuildFailedResponse(helper.ERR_INVALID_ID.Error())
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, response)
 		return
 	}

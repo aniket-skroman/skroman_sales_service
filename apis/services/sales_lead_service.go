@@ -16,7 +16,7 @@ import (
 )
 
 type SalesLeadService interface {
-	CreateNewLead(req dto.CreateNewLeadDTO) (db.SaleLeads, error)
+	CreateNewLead(req dto.CreateNewLeadDTO) (dto.SaleLeadsDTO, error)
 	FetchAllLeads(req dto.FetchAllLeadsRequestDTO) (interface{}, error)
 	FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, error)
 	IncreaeQuatationCount(lead_id uuid.UUID) error
@@ -36,17 +36,17 @@ func NewSalesLeadService(sale_lead_repo repositories.SalesRepository, lead_order
 	}
 }
 
-func (ser *sale_service) CreateNewLead(req dto.CreateNewLeadDTO) (db.SaleLeads, error) {
+func (ser *sale_service) CreateNewLead(req dto.CreateNewLeadDTO) (dto.SaleLeadsDTO, error) {
 	lead_by, err := uuid.Parse(req.LeadBy)
 
 	if err != nil {
-		return db.SaleLeads{}, err
+		return dto.SaleLeadsDTO{}, err
 	}
 
 	_, err = strconv.Atoi(req.ReferalContact)
 
 	if err != nil || len(req.ReferalContact) != 10 {
-		return db.SaleLeads{}, helper.ERR_REQUIRED_PARAMS
+		return dto.SaleLeadsDTO{}, helper.ERR_REQUIRED_PARAMS
 	}
 
 	args := db.CreateNewLeadParams{
@@ -58,8 +58,11 @@ func (ser *sale_service) CreateNewLead(req dto.CreateNewLeadDTO) (db.SaleLeads, 
 	}
 
 	new_lead, err := ser.sale_lead_repo.CreateSalesLead(args)
-
-	return new_lead, err
+	if err != nil {
+		return dto.SaleLeadsDTO{}, err
+	}
+	sale_lead := new(dto.SaleLeadsDTO).MakeSaleLeadsDTO(new_lead)
+	return sale_lead.(dto.SaleLeadsDTO), nil
 }
 func (ser *sale_service) FetchAllLeads(req dto.FetchAllLeadsRequestDTO) (interface{}, error) {
 	wg := sync.WaitGroup{}
@@ -149,7 +152,7 @@ func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, erro
 			return
 		}
 
-		if (reflect.DeepEqual(lead, db.SaleLeads{})) {
+		if (reflect.DeepEqual(lead, &db.SaleLeads{})) {
 			err_chan <- sql.ErrNoRows
 			return
 		}
@@ -315,16 +318,16 @@ func (ser *sale_service) FetchLeadsByStatus(req dto.FetchAllLeadsRequestDTO) (in
 				IsLeadInfo:     result[i].IsLeadInfo.Bool,
 				IsOrderInfo:    result[i].IsOrderInfo.Bool,
 				LeadInfo: &dto.GetLeadInfoDTO{
-					ID:           result[i].LeadInfoID,
-					Name:         result[i].Name,
+					ID:           result[i].LeadInfoID.UUID,
+					Name:         result[i].Name.String,
 					Email:        result[i].Email.String,
-					Contact:      result[i].Contact,
+					Contact:      result[i].Contact.String,
 					AddressLine1: result[i].AddressLine1.String,
 					City:         result[i].City.String,
 					State:        result[i].State.String,
 					LeadType:     result[i].LeadType.String,
-					CreatedAt:    result[i].LeadInfoCreatedAt,
-					UpdatedAt:    result[i].LeadInfoUpdatedAt,
+					CreatedAt:    result[i].LeadInfoCreatedAt.Time,
+					UpdatedAt:    result[i].LeadInfoUpdatedAt.Time,
 				},
 			}
 			if (reflect.DeepEqual(temp.LeadInfo, &dto.GetLeadInfoDTO{})) {

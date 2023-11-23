@@ -124,10 +124,10 @@ li.address_line_1 as address_line_1, li.city as city, li.state as state,
 li.lead_type as lead_type, li.created_at as lead_info_created_at,
 li.updated_at as lead_info_updated_at
 from sale_leads as sl
-inner join lead_info as li 
+left join lead_info as li 
 on sl.id = li.lead_id
 where sl.status = $1
-order by sl.created_at
+order by sl.created_at desc
 limit $2
 offset $3
 ;
