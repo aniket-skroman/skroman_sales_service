@@ -9,6 +9,7 @@ import (
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/database"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/middleware"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/routers"
+	"github.com/aniket-skroman/skroman_sales_service.git/apis/services"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
@@ -36,16 +37,11 @@ const (
 	ContentTypeText   = "text/plain; charset=utf-8"
 )
 
-// func init() {
-// 	if err := godotenv.Load(); err != nil {
-// 		panic(err)
-// 	}
-// 	//PORT = os.Getenv("PORT")
-// }
-
 func init_routers() *gin.Engine {
 	router := gin.New()
+	jwt_serv := services.NewJWTService()
 	router.Use(cors.New(CORSConfig()))
+	router.Use(middleware.AuthorizeJWT(jwt_serv))
 	router.Use(middleware.ValidateRequest)
 	return router
 }

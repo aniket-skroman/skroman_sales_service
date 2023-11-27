@@ -22,6 +22,8 @@ type SalesRepository interface {
 	FetchLeadCountMonthWise() ([]db.FetchLeadCountByMonthRow, error)
 	FetchLeadsByStatus(args db.FetchLeadsByStatusParams) ([]db.FetchLeadsByStatusRow, error)
 	FetchPGCountLeadsByStatus(status string) (int64, error)
+	CancelLead(args db.CreateCancelLeadParams) error
+	FetchCancelLead(lead_id uuid.UUID) (db.CancelLeads, error)
 }
 
 type sale_repo struct {

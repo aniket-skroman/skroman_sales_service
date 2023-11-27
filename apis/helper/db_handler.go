@@ -24,13 +24,14 @@ func Handle_db_err(err error) (err_ error) {
 				fmt.Println("Returning MSG from : ")
 				err_ = Err_Lead_Exists
 				return
+			} else if strings.Contains(e.Message, "cancel_leads_lead_id_key") {
+				err_ = errors.New("lead already canceld")
+				return
 			}
 			err_ = errors.New(e.Detail)
 			return
 
 		case "23514":
-			fmt.Println("Handle_DBError called from constraint check")
-
 			// check constraint violation
 			if strings.Contains(e.Message, "contact") {
 				err_ = errors.New("contact should not be empty")

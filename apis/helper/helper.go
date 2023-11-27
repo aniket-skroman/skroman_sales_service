@@ -1,8 +1,13 @@
 package helper
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/aniket-skroman/skroman_sales_service.git/utils"
@@ -11,12 +16,13 @@ import (
 )
 
 var (
-	ERR_INVALID_ID      error
-	ERR_REQUIRED_PARAMS error
-	Err_Lead_Exists     error
-	Err_Data_Not_Found  error
-	Err_Update_Failed   error
-	Err_Delete_Failed   error
+	ERR_INVALID_ID            error
+	ERR_REQUIRED_PARAMS       error
+	Err_Lead_Exists           error
+	Err_Data_Not_Found        error
+	Err_Update_Failed         error
+	Err_Delete_Failed         error
+	Err_Something_Wents_Wrong error
 )
 
 func init() {
@@ -26,6 +32,7 @@ func init() {
 	Err_Data_Not_Found = errors.New("data not found")
 	Err_Update_Failed = errors.New("failed to update resources")
 	Err_Delete_Failed = errors.New("failed to delete resource")
+	Err_Something_Wents_Wrong = errors.New("something wents wrong")
 }
 
 func SetPaginationData(page int, total int64) {
@@ -104,4 +111,44 @@ func msgForTag(tag string) string {
 		return "Invalid tag found"
 	}
 	return ""
+}
+
+var key = "skroman-user-servi-12345"
+
+func EncryptData(plaintext string) (string, error) {
+	block, err := aes.NewCipher([]byte(key))
+	if err != nil {
+		return "", err
+	}
+
+	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+	iv := ciphertext[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return "", err
+	}
+
+	cfb := cipher.NewCFBEncrypter(block, iv)
+	cfb.XORKeyStream(ciphertext[aes.BlockSize:], []byte(plaintext))
+
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
+
+func DecryptData(ciphertext string) (string, error) {
+	block, err := aes.NewCipher([]byte(key))
+	if err != nil {
+		return "", err
+	}
+
+	decodedCiphertext, err := base64.StdEncoding.DecodeString(ciphertext)
+	if err != nil {
+		return "", err
+	}
+
+	iv := decodedCiphertext[:aes.BlockSize]
+	decodedCiphertext = decodedCiphertext[aes.BlockSize:]
+
+	cfb := cipher.NewCFBDecrypter(block, iv)
+	cfb.XORKeyStream(decodedCiphertext, decodedCiphertext)
+
+	return string(decodedCiphertext), nil
 }

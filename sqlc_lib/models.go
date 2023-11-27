@@ -11,6 +11,15 @@ import (
 	"github.com/google/uuid"
 )
 
+type CancelLeads struct {
+	ID        uuid.UUID `json:"id"`
+	CancelBy  uuid.UUID `json:"cancel_by"`
+	LeadID    uuid.UUID `json:"lead_id"`
+	Reason    string    `json:"reason"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type LeadInfo struct {
 	ID           uuid.UUID      `json:"id"`
 	LeadID       uuid.NullUUID  `json:"lead_id"`

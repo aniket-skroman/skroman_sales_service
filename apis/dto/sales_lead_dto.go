@@ -16,14 +16,33 @@ type CreateNewLeadDTO struct {
 }
 
 type FetchAllLeadsRequestDTO struct {
-	PageId   int    `uri:"page_id"`
-	PageSize int    `uri:"page_size"`
-	Status   string `uri:"status" binding:"required,oneof=INIT PLACED CANCEL"`
+	PageId   int `uri:"page_id"`
+	PageSize int `uri:"page_size"`
+}
+
+type FetchLeadsByStatusRequestDTO struct {
+	FetchAllLeadsRequestDTO
+	Status string `uri:"status" binding:"required,oneof=INIT PLACED CANCEL"`
+}
+
+type CancelLeadRequestDTO struct {
+	Reason    string `json:"reason" binding:"required"`
+	LeadId    string `json:"lead_id" binding:"required"`
+	CanceldBy uuid.UUID
 }
 
 type FetchLeadCountsDTO struct {
 	LeadCount       db.FetchLeadCountsRow         `json:"lead_count"`
 	LeadMonthCounts []db.FetchLeadCountByMonthRow `json:"lead_month_counts"`
+}
+
+type CancelLeadsDTO struct {
+	ID        uuid.UUID   `json:"id"`
+	CancelBy  interface{} `json:"cancel_by"`
+	LeadID    uuid.UUID   `json:"lead_id"`
+	Reason    string      `json:"reason"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
 }
 
 type SaleLeadsDetailsDTO struct {

@@ -2,13 +2,17 @@ package services
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
+	"log"
+	"net/http"
 	"reflect"
 	"strconv"
 	"sync"
 
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/dto"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/helper"
+	proxycalls "github.com/aniket-skroman/skroman_sales_service.git/apis/proxy_calls"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/repositories"
 	db "github.com/aniket-skroman/skroman_sales_service.git/sqlc_lib"
 	"github.com/aniket-skroman/skroman_sales_service.git/utils"
@@ -21,18 +25,22 @@ type SalesLeadService interface {
 	FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, error)
 	IncreaeQuatationCount(lead_id uuid.UUID) error
 	FetchLeadCounts() (dto.FetchLeadCountsDTO, error)
-	FetchLeadsByStatus(req dto.FetchAllLeadsRequestDTO) (interface{}, error)
+	FetchLeadsByStatus(req dto.FetchLeadsByStatusRequestDTO) (interface{}, error)
+	CancelLead(req dto.CancelLeadRequestDTO) error
+	FetchCancelLeadByLeadId(lead_id string) (dto.CancelLeadsDTO, error)
 }
 
 type sale_service struct {
 	sale_lead_repo  repositories.SalesRepository
 	lead_order_serv LeadOrderService
+	jwt_service     JWTService
 }
 
-func NewSalesLeadService(sale_lead_repo repositories.SalesRepository, lead_order_serv LeadOrderService) SalesLeadService {
+func NewSalesLeadService(sale_lead_repo repositories.SalesRepository, lead_order_serv LeadOrderService, jwt_Service JWTService) SalesLeadService {
 	return &sale_service{
 		sale_lead_repo:  sale_lead_repo,
 		lead_order_serv: lead_order_serv,
+		jwt_service:     jwt_Service,
 	}
 }
 
@@ -284,7 +292,7 @@ func (ser *sale_service) FetchLeadCounts() (dto.FetchLeadCountsDTO, error) {
 	return result, nil
 }
 
-func (ser *sale_service) FetchLeadsByStatus(req dto.FetchAllLeadsRequestDTO) (interface{}, error) {
+func (ser *sale_service) FetchLeadsByStatus(req dto.FetchLeadsByStatusRequestDTO) (interface{}, error) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	var err error
@@ -354,4 +362,118 @@ func (ser *sale_service) FetchLeadsByStatus(req dto.FetchAllLeadsRequestDTO) (in
 	}
 
 	return sales_lead, err
+}
+
+func (ser *sale_service) CancelLead(req dto.CancelLeadRequestDTO) error {
+	lead_obj_id, err := uuid.Parse(req.LeadId)
+
+	if err != nil {
+		return helper.ERR_INVALID_ID
+	}
+
+	cancel_by, err := uuid.Parse(utils.TOKEN_ID)
+	if err != nil {
+		return helper.Err_Something_Wents_Wrong
+	}
+
+	args := db.CreateCancelLeadParams{
+		LeadID:   lead_obj_id,
+		Reason:   req.Reason,
+		CancelBy: cancel_by,
+	}
+
+	err = ser.sale_lead_repo.CancelLead(args)
+
+	return helper.Handle_db_err(err)
+}
+
+func (ser *sale_service) FetchCancelLeadByLeadId(lead_id string) (dto.CancelLeadsDTO, error) {
+	lead_obj_id, err := uuid.Parse(lead_id)
+
+	if err != nil {
+		return dto.CancelLeadsDTO{}, helper.ERR_INVALID_ID
+	}
+
+	result, err := ser.sale_lead_repo.FetchCancelLead(lead_obj_id)
+
+	if err != nil {
+		return dto.CancelLeadsDTO{}, err
+	}
+
+	user, err := ser.fetch_users_data(result.CancelBy.String())
+	cancel_lead := dto.CancelLeadsDTO{}
+
+	if err != nil {
+		log.Println("Err : ", err)
+		cancel_lead.CancelBy = nil
+	} else {
+		cancel_lead.CancelBy = user
+	}
+
+	cancel_lead.ID = result.ID
+	cancel_lead.LeadID = result.LeadID
+	cancel_lead.Reason = result.Reason
+	cancel_lead.CreatedAt = result.CreatedAt
+	cancel_lead.UpdatedAt = result.UpdatedAt
+
+	return cancel_lead, nil
+}
+
+func (ser *sale_service) recover_ser() {
+	if err := recover(); err != nil {
+		log.Println("RECOVERD : ", err)
+	}
+}
+
+func (ser *sale_service) fetch_users_data(user_id string) (interface{}, error) {
+	defer ser.recover_ser()
+
+	proxycall := proxycalls.ProxyCalls{
+		ReqEndpoint:   "fetch-user",
+		RequestBody:   nil,
+		RequestMethod: http.MethodGet,
+		IsRequestBody: false,
+	}
+	token := ser.jwt_service.GenerateTempToken(user_id, "EMP", "SALES")
+
+	proxycall.RequestHeaders = map[string]string{
+		"Authorization": token,
+	}
+
+	response, err := proxycall.MakeRequestWithBody()
+
+	if err != nil {
+		return nil, err
+	}
+
+	// requrl := "http://15.207.19.172:8080/api/fetch-user"
+
+	// ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	// defer cancel()
+
+	// request, err := http.NewRequestWithContext(ctx, http.MethodGet, requrl, nil)
+
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// request.Close = true
+	// request.Header.Set("Authorization", token)
+
+	// response, err := http.DefaultClient.Do(request)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	defer response.Body.Close()
+
+	if response.StatusCode == http.StatusOK {
+
+		var response_data map[string]interface{}
+		err = json.NewDecoder(response.Body).Decode(&response_data)
+
+		return response_data["user_data"], err
+	}
+
+	return nil, nil
 }

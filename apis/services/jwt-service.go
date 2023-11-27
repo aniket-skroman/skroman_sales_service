@@ -1,19 +1,18 @@
 package services
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 
 	"time"
 
+	"github.com/aniket-skroman/skroman_sales_service.git/apis/helper"
 	"github.com/dgrijalva/jwt-go"
 )
 
 type JWTService interface {
-	GenerateToken(userID string, userType string) string
-	GenerateTempToken(UserID string, userType string) string
+	GenerateToken(userID, userType string) string
+	GenerateTempToken(UserID, userType, dept string) string
 	ValidateToken(token string) (*jwt.Token, error)
 }
 
@@ -21,6 +20,14 @@ type jwtCustomClaim struct {
 	UserID    string    `json:"user_id"`
 	UserType  string    `json:"user_type"`
 	CreatedAt time.Time `json:"created_at"`
+	jwt.StandardClaims
+}
+
+type jwtTempCustomClaim struct {
+	UserID         string    `json:"user_id"`
+	UserType       string    `json:"user_type"`
+	UserDepartment string    `json:"dept"`
+	CreatedAt      time.Time `json:"created_at"`
 	jwt.StandardClaims
 }
 
@@ -70,33 +77,25 @@ func (j *jwtService) ValidateToken(token string) (*jwt.Token, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method %v", t.Header["alg"])
 		}
-		if t.Valid {
-			fmt.Println("token valid ", t)
-		}
-		byteArr, _ := json.Marshal(t.Claims)
-
-		tokenData := new(jwtCustomClaim)
-
-		json.Unmarshal(byteArr, &tokenData)
-
-		d := time.Since(tokenData.CreatedAt)
-		if d.Hours() > 24 {
-			return nil, errors.New("token has been expired")
-		}
 
 		return []byte(j.secretKey), nil
 	})
 }
 
-func (j *jwtService) GenerateTempToken(UserID string, userType string) string {
-	claims := &jwtCustomClaim{
+func (j *jwtService) GenerateTempToken(UserID, userType, dept string) string {
+	UserID, _ = helper.EncryptData(UserID)
+	userType, _ = helper.EncryptData(userType)
+	dept, _ = helper.EncryptData(dept)
+
+	claims := &jwtTempCustomClaim{
 		UserID,
 		userType,
+		dept,
 		time.Now().Add(10 * time.Minute),
 		jwt.StandardClaims{
-			ExpiresAt: int64(5 * time.Minute),
+			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
 			Issuer:    j.issuer,
-			IssuedAt:  time.Now().Add(-5 * time.Minute).Unix(),
+			IssuedAt:  time.Now().Unix(),
 		},
 	}
 

@@ -496,6 +496,38 @@ func (q *Queries) UpdateIsLeadOrder(ctx context.Context, arg UpdateIsLeadOrderPa
 	return i, err
 }
 
+const updateLeadStatus = `-- name: UpdateLeadStatus :one
+update sale_leads
+set status = $2,
+updated_at = CURRENT_TIMESTAMP
+where id = $1
+returning id, lead_by, referal_name, referal_contact, status, quatation_count, created_at, updated_at, is_lead_info, is_order_info
+`
+
+type UpdateLeadStatusParams struct {
+	ID     uuid.UUID `json:"id"`
+	Status string    `json:"status"`
+}
+
+// update a lead status , INIT, CANCELD, PLACED
+func (q *Queries) UpdateLeadStatus(ctx context.Context, arg UpdateLeadStatusParams) (SaleLeads, error) {
+	row := q.db.QueryRowContext(ctx, updateLeadStatus, arg.ID, arg.Status)
+	var i SaleLeads
+	err := row.Scan(
+		&i.ID,
+		&i.LeadBy,
+		&i.ReferalName,
+		&i.ReferalContact,
+		&i.Status,
+		&i.QuatationCount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsLeadInfo,
+		&i.IsOrderInfo,
+	)
+	return i, err
+}
+
 const updateSaleLeadReferal = `-- name: UpdateSaleLeadReferal :one
 update sale_leads
 set referal_name = $2,

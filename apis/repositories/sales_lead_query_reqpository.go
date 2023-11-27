@@ -81,3 +81,49 @@ func (repo *sale_repo) FetchPGCountLeadsByStatus(status string) (int64, error) {
 
 	return repo.db.Queries.PGCountByLeadStatus(ctx, status)
 }
+
+func (repo *sale_repo) CancelLead(args db.CreateCancelLeadParams) error {
+
+	// db tx
+	tx, err := repo.db.DBTransaction()
+
+	if err != nil {
+		return err
+	}
+
+	txq := repo.db.WithTx(tx)
+
+	ctx, cancel := repo.Init()
+	defer cancel()
+
+	// first create cancel lead obj
+	_, err = txq.CreateCancelLead(ctx, args)
+
+	if err != nil {
+		return err
+	}
+
+	// then update a lead status
+	up_args := db.UpdateLeadStatusParams{
+		ID:     args.LeadID,
+		Status: "CANCELD",
+	}
+
+	_, err = txq.UpdateLeadStatus(ctx, up_args)
+
+	if err != nil {
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func (repo *sale_repo) FetchCancelLead(lead_id uuid.UUID) (db.CancelLeads, error) {
+	ctx, cancel := repo.Init()
+	defer cancel()
+
+	return repo.db.Queries.FetchCancelLeadByLeadId(ctx, lead_id)
+}

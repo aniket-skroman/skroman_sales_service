@@ -136,3 +136,12 @@ offset $3
 -- name: PGCountByLeadStatus :one
 select count(*) from sale_leads
 where status = $1;
+
+/* update a lead status , INIT, CANCELD, PLACED */
+-- name: UpdateLeadStatus :one
+update sale_leads
+set status = $2,
+updated_at = CURRENT_TIMESTAMP
+where id = $1
+returning *;
+

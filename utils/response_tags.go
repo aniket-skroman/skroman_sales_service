@@ -38,6 +38,7 @@ var PREVIOUS_IDX = 0
 var TOTALCOUNT int64 = 0
 var TOKEN_ID = ""
 var USER_TYPE = ""
+var USER_DEPRT = ""
 
 // DATA --------------- Response Key Words ------------//
 const DATA = "app_data"

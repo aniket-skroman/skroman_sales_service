@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/dto"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/helper"
@@ -20,6 +22,8 @@ type SaleLeadsController interface {
 	FetchLeadByLeadId(*gin.Context)
 	FetchLeadCounts(*gin.Context)
 	FetchLeadsByStatus(ctx *gin.Context)
+	CancelLead(ctx *gin.Context)
+	FetchCancelLead(ctx *gin.Context)
 }
 
 type sale_controller struct {
@@ -139,7 +143,7 @@ func (cont *sale_controller) FetchLeadCounts(ctx *gin.Context) {
 }
 
 func (cont *sale_controller) FetchLeadsByStatus(ctx *gin.Context) {
-	var req dto.FetchAllLeadsRequestDTO
+	var req dto.FetchLeadsByStatusRequestDTO
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		cont.response = utils.RequestParamsMissingResponse(helper.Handle_required_param_error(err))
@@ -155,6 +159,10 @@ func (cont *sale_controller) FetchLeadsByStatus(ctx *gin.Context) {
 			cont.response = utils.BuildFailedResponse("data not found")
 			ctx.JSON(http.StatusNotFound, cont.response)
 			return
+		} else if err == context.DeadlineExceeded {
+			cont.response = utils.BuildFailedResponse(helper.Err_Something_Wents_Wrong.Error())
+			ctx.JSON(http.StatusInternalServerError, cont.response)
+			return
 		}
 		cont.response = utils.BuildFailedResponse(err.Error())
 		ctx.JSON(http.StatusInternalServerError, cont.response)
@@ -162,5 +170,60 @@ func (cont *sale_controller) FetchLeadsByStatus(ctx *gin.Context) {
 	}
 
 	cont.response = utils.BuildResponseWithPagination(utils.FETCHED_SUCCESS, "", utils.SALES_LEAD, result)
+	ctx.JSON(http.StatusOK, cont.response)
+}
+
+func (cont *sale_controller) CancelLead(ctx *gin.Context) {
+	var req dto.CancelLeadRequestDTO
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		cont.response = utils.BuildFailedResponse(helper.Handle_required_param_error(err))
+		ctx.JSON(http.StatusBadRequest, cont.response)
+		return
+	}
+
+	err := cont.sale_serv.CancelLead(req)
+
+	if err != nil {
+		cont.response = utils.BuildFailedResponse(err.Error())
+		if err == helper.ERR_INVALID_ID {
+			ctx.JSON(http.StatusBadRequest, cont.response)
+			return
+		} else if strings.Contains(err.Error(), "already canceld") {
+			ctx.JSON(http.StatusConflict, cont.response)
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, cont.response)
+		return
+	}
+
+	cont.response = utils.BuildSuccessResponse("lead has been cancel successfully", utils.SALES_LEAD, nil)
+	ctx.JSON(http.StatusOK, cont.response)
+}
+
+func (cont *sale_controller) FetchCancelLead(ctx *gin.Context) {
+	lead_id := ctx.Param("lead_id")
+
+	if lead_id == "" {
+		cont.response = utils.RequestParamsMissingResponse(helper.ERR_REQUIRED_PARAMS)
+		ctx.JSON(http.StatusBadRequest, cont.response)
+		return
+	}
+
+	result, err := cont.sale_serv.FetchCancelLeadByLeadId(lead_id)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			cont.response = utils.BuildFailedResponse(helper.Err_Data_Not_Found.Error())
+			ctx.JSON(http.StatusNotFound, cont.response)
+			return
+		}
+
+		cont.response = utils.BuildFailedResponse(err.Error())
+		ctx.JSON(http.StatusInternalServerError, cont.response)
+		return
+	}
+
+	cont.response = utils.BuildSuccessResponse(utils.FETCHED_SUCCESS, utils.SALES_LEAD, result)
 	ctx.JSON(http.StatusOK, cont.response)
 }

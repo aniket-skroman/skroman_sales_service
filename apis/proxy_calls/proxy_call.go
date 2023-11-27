@@ -2,7 +2,9 @@ package proxycalls
 
 import (
 	"bytes"
+	"context"
 	"net/http"
+	"time"
 )
 
 var (
@@ -11,22 +13,38 @@ var (
 )
 
 type ProxyCalls struct {
-	ReqEndpoint   string
-	RequestBody   []byte
-	RequestMethod string
-	RequestParams interface{}
-	IsRequestBody bool // request need a body or params
-	Response      *http.Response
+	ReqEndpoint    string
+	RequestBody    []byte
+	RequestMethod  string
+	RequestParams  interface{}
+	RequestHeaders map[string]string
+	IsRequestBody  bool // request need a body or params
+	Response       *http.Response
 }
 
 func (procall *ProxyCalls) MakeRequestWithBody() (*http.Response, error) {
-	request, err := http.NewRequest(procall.RequestMethod, BASE_URL+procall.ReqEndpoint, bytes.NewReader(procall.RequestBody))
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	var request *http.Request
+	var err error
+
+	if procall.IsRequestBody {
+		request, err = http.NewRequestWithContext(ctx, procall.RequestMethod, USER_SERVICE+procall.ReqEndpoint, bytes.NewReader(procall.RequestBody))
+	} else {
+		request, err = http.NewRequestWithContext(ctx, procall.RequestMethod, USER_SERVICE+procall.ReqEndpoint, nil)
+	}
+
 	if err != nil {
 		return nil, err
+	}
+	request.Close = true
+
+	for key, val := range procall.RequestHeaders {
+		request.Header.Set(key, val)
 	}
 
 	request.Header.Set("Content-Type", "application/json")
 
-	response, err := http.DefaultClient.Do(request)
-	return response, err
+	return http.DefaultClient.Do(request)
 }
