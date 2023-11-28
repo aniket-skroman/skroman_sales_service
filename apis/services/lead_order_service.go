@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"sync"
 
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/dto"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/helper"
@@ -73,13 +74,33 @@ func (serv *lead_order_serv) FetchOrdersByLeadId(lead_id uuid.UUID) ([]dto.LeadO
 		return nil, sql.ErrNoRows
 	}
 
-	result := new(dto.LeadOrderDTO).MakeLeadOrderDTO(orders...)
-	if data, ok := result.(dto.LeadOrderDTO); ok {
-		return []dto.LeadOrderDTO{data}, nil
+	result := make([]dto.LeadOrderDTO, len(orders))
+	wg := sync.WaitGroup{}
+
+	for i, data := range orders {
+		wg.Add(1)
+		go serv.setOrderData(&wg, &result[i], &data)
 	}
+	wg.Wait()
 
-	return result.([]dto.LeadOrderDTO), nil
+	return result, nil
 
+}
+
+func (ser *lead_order_serv) setOrderData(wg *sync.WaitGroup, result *dto.LeadOrderDTO, data *db.LeadOrder) {
+	defer wg.Done()
+
+	*result = dto.LeadOrderDTO{
+		ID:          data.ID,
+		LeadID:      data.LeadID,
+		DeviceType:  data.DeviceType.String,
+		DeviceModel: data.DeviceModel.String,
+		DeviceName:  data.DeviceName.String,
+		DevicePrice: data.DevicePrice.Int32,
+		Quantity:    data.Quantity.Int32,
+		CreatedAt:   data.CreatedAt,
+		UpdatedAt:   data.UpdatedAt,
+	}
 }
 
 func (serv *lead_order_serv) DeleteLeadOrder(req dto.DeleteLeadOrderRequestDTO) error {

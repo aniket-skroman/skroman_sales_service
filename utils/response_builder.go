@@ -1,9 +1,9 @@
 package utils
 
 type Pagination struct {
-	CurrentIdx  int   `json:"current_idx"`
-	PreviousIdx int   `json:"previous_idx"`
-	TotalCount  int64 `json:"total_count"`
+	CurrentIdx  int32 `json:"current_idx"`
+	PreviousIdx int32 `json:"previous_idx"`
+	TotalCount  int32 `json:"total_count"`
 }
 
 func PaginationData() Pagination {

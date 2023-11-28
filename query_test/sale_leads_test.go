@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aniket-skroman/skroman_sales_service.git/apis"
+	"github.com/aniket-skroman/skroman_sales_service.git/apis/repositories"
+	"github.com/aniket-skroman/skroman_sales_service.git/apis/services"
 	db "github.com/aniket-skroman/skroman_sales_service.git/sqlc_lib"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -191,4 +194,27 @@ func TestFetchLeadsByStatus(t *testing.T) {
 
 func print(args ...interface{}) {
 	fmt.Println("DEBUG : ", args)
+}
+
+func BenchmarkFetchAllLeads(b *testing.B) {
+	store := apis.NewStore(testDB)
+	repo := repositories.NewSalesRepository(store)
+	lead_repo := repositories.NewLeadOrderRepository(store)
+	lead_order_ser := services.NewLeadOrderService(lead_repo)
+	jwt_ser := services.NewJWTService()
+	ser := services.NewSalesLeadService(repo, lead_order_ser, jwt_ser)
+	lead_id, _ := uuid.Parse("996db888-bde9-4f30-b335-0b777b70673b")
+	for i := 0; i < b.N; i++ {
+		// req := dto.FetchAllLeadsRequestDTO{
+		// 	PageId:   1,
+		// 	PageSize: 20,
+		// }
+
+		ser.FetchLeadByLeadId(lead_id)
+
+		// b.Run("Running test", func(b *testing.B) {
+		// 	ser.FetchAllLeads(req)
+		// })
+	}
+
 }

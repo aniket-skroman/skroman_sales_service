@@ -33,9 +33,9 @@ const DELETE_SUCCESS = "successfully deleted"
 // REQUEST_HOST -------------- BACKEND DEV VARIABLES -----------//S
 var REQUEST_HOST = ""
 
-var CURRENT_IDX = 0
-var PREVIOUS_IDX = 0
-var TOTALCOUNT int64 = 0
+var CURRENT_IDX int32 = 0
+var PREVIOUS_IDX int32 = 0
+var TOTALCOUNT int32 = 0
 var TOKEN_ID = ""
 var USER_TYPE = ""
 var USER_DEPRT = ""

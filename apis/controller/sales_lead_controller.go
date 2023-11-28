@@ -72,9 +72,13 @@ func (cont *sale_controller) FetchAllLeads(ctx *gin.Context) {
 
 	if err != nil {
 
-		if errors.Is(err, sql.ErrNoRows) {
+		if err == sql.ErrNoRows {
 			cont.response = utils.BuildFailedResponse("data not found")
 			ctx.JSON(http.StatusNotFound, cont.response)
+			return
+		} else if err == context.DeadlineExceeded {
+			cont.response = utils.BuildFailedResponse(helper.Err_Something_Wents_Wrong.Error())
+			ctx.JSON(http.StatusInternalServerError, cont.response)
 			return
 		}
 		cont.response = utils.BuildFailedResponse(err.Error())
@@ -111,7 +115,6 @@ func (cont *sale_controller) FetchLeadByLeadId(ctx *gin.Context) {
 }
 
 func (cont *sale_controller) IncreaeQuatationCount(ctx *gin.Context) {
-	//lead_id := ctx.Param("lead_id")
 	lead_id, _ := ctx.Get("lead_id")
 	err := cont.sale_serv.IncreaeQuatationCount(lead_id.(uuid.UUID))
 

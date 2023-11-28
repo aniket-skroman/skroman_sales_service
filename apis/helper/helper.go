@@ -35,7 +35,7 @@ func init() {
 	Err_Something_Wents_Wrong = errors.New("something wents wrong")
 }
 
-func SetPaginationData(page int, total int64) {
+func SetPaginationData(page int32, total int32) {
 	if page == 0 {
 		utils.PREVIOUS_IDX = 0
 	} else {

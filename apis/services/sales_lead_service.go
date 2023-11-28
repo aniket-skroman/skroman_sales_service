@@ -73,6 +73,7 @@ func (ser *sale_service) CreateNewLead(req dto.CreateNewLeadDTO) (dto.SaleLeadsD
 	return sale_lead.(dto.SaleLeadsDTO), nil
 }
 func (ser *sale_service) FetchAllLeads(req dto.FetchAllLeadsRequestDTO) (interface{}, error) {
+
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	var err error
@@ -86,49 +87,24 @@ func (ser *sale_service) FetchAllLeads(req dto.FetchAllLeadsRequestDTO) (interfa
 		}
 
 		result, err = ser.sale_lead_repo.FetchAllLeads(args)
-
 		if err != nil {
 			return
 		}
 
+		sales_lead = make([]dto.SaleLeadsDTO, len(result))
+		t_wg := sync.WaitGroup{}
+
 		for i := range result {
-			temp := dto.SaleLeadsDTO{
-				ID:             result[i].LeadID,
-				LeadBy:         result[i].LeadBy,
-				ReferalName:    result[i].ReferalName,
-				ReferalContact: result[i].ReferalContact,
-				Status:         result[i].Status,
-				QuatationCount: result[i].QuatationCount.Int32,
-				CreatedAt:      result[i].LeadCreatedAt,
-				UpdatedAt:      result[i].LeadUpdatedAt,
-				IsLeadInfo:     result[i].IsLeadInfo.Bool,
-				IsOrderInfo:    result[i].IsOrderInfo.Bool,
-				LeadInfo: &dto.GetLeadInfoDTO{
-					ID:           result[i].LeadInfoID.UUID,
-					Name:         result[i].Name.String,
-					Email:        result[i].Email.String,
-					Contact:      result[i].Contact.String,
-					AddressLine1: result[i].AddressLine1.String,
-					City:         result[i].City.String,
-					State:        result[i].State.String,
-					LeadType:     result[i].LeadType.String,
-					CreatedAt:    result[i].LeadInfoCreatedAt.Time,
-					UpdatedAt:    result[i].LeadInfoUpdatedAt.Time,
-				},
-			}
-			if (reflect.DeepEqual(temp.LeadInfo, &dto.GetLeadInfoDTO{})) {
-				temp.LeadInfo = nil
-			} else {
-				temp.LeadInfo.LeadID = result[i].LeadID
-			}
-			sales_lead = append(sales_lead, temp)
+			t_wg.Add(1)
+			go ser.setLeadData(&t_wg, &sales_lead[i], &result[i])
 		}
+		t_wg.Wait()
 	}()
 
 	go func() {
 		defer wg.Done()
 		count, _ := ser.sale_lead_repo.CountSalesLead()
-		helper.SetPaginationData(req.PageId, count)
+		helper.SetPaginationData(int32(req.PageId), int32(count))
 	}()
 
 	wg.Wait()
@@ -143,12 +119,49 @@ func (ser *sale_service) FetchAllLeads(req dto.FetchAllLeadsRequestDTO) (interfa
 	return sales_lead, err
 }
 
+func (ser *sale_service) setLeadData(wg *sync.WaitGroup, result *dto.SaleLeadsDTO, data *db.FetchAllLeadsRow) {
+	defer wg.Done()
+	temp := dto.SaleLeadsDTO{
+		ID:             data.LeadID,
+		LeadBy:         data.LeadBy,
+		ReferalName:    data.ReferalName,
+		ReferalContact: data.ReferalContact,
+		Status:         data.Status,
+		QuatationCount: data.QuatationCount.Int32,
+		CreatedAt:      data.LeadCreatedAt,
+		UpdatedAt:      data.LeadUpdatedAt,
+		IsLeadInfo:     data.IsLeadInfo.Bool,
+		IsOrderInfo:    data.IsOrderInfo.Bool,
+		LeadInfo: &dto.GetLeadInfoDTO{
+			ID:           data.LeadInfoID.UUID,
+			Name:         data.Name.String,
+			Email:        data.Email.String,
+			Contact:      data.Contact.String,
+			AddressLine1: data.AddressLine1.String,
+			City:         data.City.String,
+			State:        data.State.String,
+			LeadType:     data.LeadType.String,
+			CreatedAt:    data.LeadInfoCreatedAt.Time,
+			UpdatedAt:    data.LeadInfoUpdatedAt.Time,
+		},
+	}
+
+	if (temp.LeadInfo == &dto.GetLeadInfoDTO{}) {
+		temp.LeadInfo = nil
+	} else {
+		temp.LeadInfo.LeadID = data.LeadID
+	}
+
+	*result = temp
+
+}
+
 func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, error) {
 
 	wg := sync.WaitGroup{}
 	wg.Add(3)
 
-	result := dto.SaleLeadsDTO{}
+	var result dto.SaleLeadsDTO
 	err_chan := make(chan error)
 
 	go func() {
@@ -189,12 +202,12 @@ func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, erro
 
 	go func() {
 		defer wg.Done()
-		orders, err := ser.lead_order_serv.FetchOrdersByLeadId(lead_id)
-		if err != nil {
+		if orders, err := ser.lead_order_serv.FetchOrdersByLeadId(lead_id); err != nil {
 			err_chan <- err
 			return
+		} else {
+			result.LeadOrders = &orders
 		}
-		result.LeadOrders = &orders
 	}()
 
 	go func() {
@@ -207,14 +220,12 @@ func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, erro
 		}
 
 		quotations := make([]dto.OrderQuatation, len(order_result))
-		for i := range order_result {
-			quotations[i] = dto.OrderQuatation{
-				ID:            order_result[i].ID,
-				QuotationLink: utils.QUOTATION_PATH_URL + order_result[i].QuatationLink,
-				CreatedAt:     order_result[i].CreatedAt,
-				UpdatedAt:     order_result[i].UpdatedAt,
-			}
+		t_w := sync.WaitGroup{}
+		for i, quotation := range order_result {
+			t_w.Add(1)
+			go ser.setOrderQuotationData(&t_w, &quotations[i], &quotation)
 		}
+		t_w.Wait()
 
 		if len(quotations) != 0 {
 			result.OrderQuatations = &quotations
@@ -233,6 +244,17 @@ func (ser *sale_service) FetchLeadByLeadId(lead_id uuid.UUID) (interface{}, erro
 	}
 
 	return result, nil
+}
+
+func (ser *sale_service) setOrderQuotationData(wg *sync.WaitGroup, result *dto.OrderQuatation, data *db.OrderQuatation) {
+	defer wg.Done()
+
+	*result = dto.OrderQuatation{
+		ID:            data.ID,
+		QuotationLink: utils.QUOTATION_PATH_URL + data.QuatationLink,
+		CreatedAt:     data.CreatedAt,
+		UpdatedAt:     data.UpdatedAt,
+	}
 }
 
 func (ser *sale_service) IncreaeQuatationCount(lead_id uuid.UUID) error {
@@ -349,7 +371,7 @@ func (ser *sale_service) FetchLeadsByStatus(req dto.FetchLeadsByStatusRequestDTO
 	go func() {
 		defer wg.Done()
 		count, _ := ser.sale_lead_repo.FetchPGCountLeadsByStatus(req.Status)
-		helper.SetPaginationData(req.PageId, count)
+		helper.SetPaginationData(int32(req.PageId), int32(count))
 	}()
 
 	wg.Wait()
@@ -404,7 +426,6 @@ func (ser *sale_service) FetchCancelLeadByLeadId(lead_id string) (dto.CancelLead
 	cancel_lead := dto.CancelLeadsDTO{}
 
 	if err != nil {
-		log.Println("Err : ", err)
 		cancel_lead.CancelBy = nil
 	} else {
 		cancel_lead.CancelBy = user
@@ -445,25 +466,6 @@ func (ser *sale_service) fetch_users_data(user_id string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// requrl := "http://15.207.19.172:8080/api/fetch-user"
-
-	// ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	// defer cancel()
-
-	// request, err := http.NewRequestWithContext(ctx, http.MethodGet, requrl, nil)
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// request.Close = true
-	// request.Header.Set("Authorization", token)
-
-	// response, err := http.DefaultClient.Do(request)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	defer response.Body.Close()
 
