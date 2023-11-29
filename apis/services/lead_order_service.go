@@ -77,9 +77,9 @@ func (serv *lead_order_serv) FetchOrdersByLeadId(lead_id uuid.UUID) ([]dto.LeadO
 	result := make([]dto.LeadOrderDTO, len(orders))
 	wg := sync.WaitGroup{}
 
-	for i, data := range orders {
+	for i := range orders {
 		wg.Add(1)
-		go serv.setOrderData(&wg, &result[i], &data)
+		go serv.setOrderData(&wg, &result[i], &orders[i])
 	}
 	wg.Wait()
 
