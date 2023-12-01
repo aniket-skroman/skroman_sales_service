@@ -448,29 +448,19 @@ func (ser *sale_service) recover_ser() {
 
 func (ser *sale_service) fetch_users_data(user_id string) (interface{}, error) {
 	defer ser.recover_ser()
-
-	proxycall := proxycalls.ProxyCalls{
-		ReqEndpoint:   "fetch-user",
-		RequestBody:   nil,
-		RequestMethod: http.MethodGet,
-		IsRequestBody: false,
-	}
 	token := ser.jwt_service.GenerateTempToken(user_id, "EMP", "SALES")
-
-	proxycall.RequestHeaders = map[string]string{
+	api_resquest := proxycalls.NewAPIRequest("fetch-user", "GET", false, nil, nil, map[string]string{
 		"Authorization": token,
-	}
+	})
 
-	response, err := proxycall.MakeRequestWithBody()
+	response, err := api_resquest.MakeRequest()
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer response.Body.Close()
-
 	if response.StatusCode == http.StatusOK {
-
 		var response_data map[string]interface{}
 		err = json.NewDecoder(response.Body).Decode(&response_data)
 
