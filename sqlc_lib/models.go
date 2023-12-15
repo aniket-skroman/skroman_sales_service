@@ -46,6 +46,15 @@ type LeadOrder struct {
 	Quantity    sql.NullInt32  `json:"quantity"`
 }
 
+type LeadVisit struct {
+	ID              uuid.UUID `json:"id"`
+	LeadID          uuid.UUID `json:"lead_id"`
+	VisitBy         uuid.UUID `json:"visit_by"`
+	VisitDiscussion string    `json:"visit_discussion"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
 type OrderQuatation struct {
 	ID            uuid.UUID `json:"id"`
 	LeadID        uuid.UUID `json:"lead_id"`

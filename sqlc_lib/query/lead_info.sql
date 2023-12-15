@@ -30,3 +30,5 @@ returning *;
 -- name: DeleteLeadInfoByLeadId :execresult
 delete from lead_info
 where lead_id = $1;
+
+/*9022811746*/

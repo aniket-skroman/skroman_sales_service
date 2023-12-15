@@ -28,6 +28,7 @@ type SalesLeadService interface {
 	FetchLeadsByStatus(req dto.FetchLeadsByStatusRequestDTO) (interface{}, error)
 	CancelLead(req dto.CancelLeadRequestDTO) error
 	FetchCancelLeadByLeadId(lead_id string) (dto.CancelLeadsDTO, error)
+	Fetch_users_data(user_id string) (interface{}, error)
 }
 
 type sale_service struct {
@@ -422,7 +423,7 @@ func (ser *sale_service) FetchCancelLeadByLeadId(lead_id string) (dto.CancelLead
 		return dto.CancelLeadsDTO{}, err
 	}
 
-	user, err := ser.fetch_users_data(result.CancelBy.String())
+	user, err := ser.Fetch_users_data(result.CancelBy.String())
 	cancel_lead := dto.CancelLeadsDTO{}
 
 	if err != nil {
@@ -446,7 +447,7 @@ func (ser *sale_service) recover_ser() {
 	}
 }
 
-func (ser *sale_service) fetch_users_data(user_id string) (interface{}, error) {
+func (ser *sale_service) Fetch_users_data(user_id string) (interface{}, error) {
 	defer ser.recover_ser()
 	token := ser.jwt_service.GenerateTempToken(user_id, "EMP", "SALES")
 	api_resquest := proxycalls.NewAPIRequest("fetch-user", "GET", false, nil, nil, map[string]string{
