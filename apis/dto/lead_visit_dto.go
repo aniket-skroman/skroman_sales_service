@@ -12,11 +12,16 @@ type CreateLeadVisitRequestDTO struct {
 	VisitDiscussion string `json:"discussion" binding:"required"`
 }
 
-type LeadVisit struct {
+type LeadVistDTO struct {
 	ID              uuid.UUID   `json:"id"`
 	LeadID          uuid.UUID   `json:"lead_id"`
 	VisitBy         interface{} `json:"visit_by"`
 	VisitDiscussion string      `json:"visit_discussion"`
 	CreatedAt       time.Time   `json:"created_at"`
 	UpdatedAt       time.Time   `json:"updated_at"`
+}
+
+type LeadVisit struct {
+	LeadVistDTO []LeadVistDTO `json:"visit_data"`
+	LeadInfo    interface{}   `json:"lead_info"`
 }

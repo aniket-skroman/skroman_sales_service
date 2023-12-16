@@ -12,18 +12,22 @@ import (
 
 type LeadVisitService interface {
 	CreateLeadVisit(req dto.CreateLeadVisitRequestDTO) (db.LeadVisit, error)
-	FetchAllVisitByLead(lead_id string) ([]dto.LeadVisit, error)
+	FetchAllVisitByLead(lead_id string) (dto.LeadVisit, error)
 }
 
 type lead_visit_serv struct {
 	lead_visit_repo repositories.LeadVisitRepository
 	lead_serv       SalesLeadService
+	jwt_serv        JWTService
 }
 
-func NewLeadVisitService(repo repositories.LeadVisitRepository, lead_serv SalesLeadService) LeadVisitService {
+func NewLeadVisitService(repo repositories.LeadVisitRepository, lead_serv SalesLeadService,
+	jwt_serv JWTService,
+) LeadVisitService {
 	return &lead_visit_serv{
 		lead_visit_repo: repo,
 		lead_serv:       lead_serv,
+		jwt_serv:        jwt_serv,
 	}
 }
 
@@ -57,30 +61,38 @@ func (serv *lead_visit_serv) CreateLeadVisit(req dto.CreateLeadVisitRequestDTO) 
 	return result, nil
 }
 
-func (serv *lead_visit_serv) FetchAllVisitByLead(lead_id string) ([]dto.LeadVisit, error) {
+func (serv *lead_visit_serv) FetchAllVisitByLead(lead_id string) (dto.LeadVisit, error) {
 	lead_obj_id, err := uuid.Parse(lead_id)
 
 	if err != nil {
-		return nil, helper.ERR_INVALID_ID
+		return dto.LeadVisit{}, helper.ERR_INVALID_ID
 	}
 
 	result, err := serv.lead_visit_repo.FetchAllVisitByLead(lead_obj_id)
 
 	if err != nil {
-		return nil, err
+		return dto.LeadVisit{}, err
 	}
 
 	if len(result) == 0 {
-		return nil, helper.Err_Data_Not_Found
+		return dto.LeadVisit{}, helper.Err_Data_Not_Found
 	}
 
-	lead_visits := make([]dto.LeadVisit, len(result))
+	var lead_visits dto.LeadVisit
+	lead_visits.LeadVistDTO = make([]dto.LeadVistDTO, len(result))
 	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func(lead_id uuid.UUID) {
+		// defer wg.Done()
+		lead_info, _ := serv.set_lead_info_data(&wg, lead_id)
+		lead_visits.LeadInfo = lead_info
+	}(lead_obj_id)
 
 	for i, visit := range result {
 		wg.Add(2)
-		go serv.set_lead_visit_data(&wg, &lead_visits[i], &visit)
-		go serv.set_visit_by_user_data(&wg, &lead_visits[i], visit.VisitBy)
+		go serv.set_lead_visit_data(&wg, &lead_visits.LeadVistDTO[i], &visit)
+		go serv.set_visit_by_user_data(&wg, &lead_visits.LeadVistDTO[i], visit.VisitBy)
 
 	}
 
@@ -89,19 +101,24 @@ func (serv *lead_visit_serv) FetchAllVisitByLead(lead_id string) ([]dto.LeadVisi
 	return lead_visits, nil
 }
 
-func (serv *lead_visit_serv) set_lead_visit_data(wg *sync.WaitGroup, result *dto.LeadVisit, data *db.LeadVisit) {
+func (serv *lead_visit_serv) set_lead_visit_data(wg *sync.WaitGroup, result *dto.LeadVistDTO, data *db.LeadVisit) {
 	defer wg.Done()
 	result.ID = data.ID
 	result.LeadID = data.LeadID
 	result.VisitDiscussion = data.VisitDiscussion
 	result.CreatedAt = data.CreatedAt
 	result.UpdatedAt = data.UpdatedAt
-
 }
 
-func (serv *lead_visit_serv) set_visit_by_user_data(wg *sync.WaitGroup, result *dto.LeadVisit, visit_by uuid.UUID) {
+func (serv *lead_visit_serv) set_visit_by_user_data(wg *sync.WaitGroup, result *dto.LeadVistDTO, visit_by uuid.UUID) {
 	defer wg.Done()
 
 	user_data, _ := serv.lead_serv.Fetch_users_data(visit_by.String())
 	result.VisitBy = user_data
+}
+
+func (serv *lead_visit_serv) set_lead_info_data(wg *sync.WaitGroup, lead_id uuid.UUID) (interface{}, error) {
+	defer wg.Done()
+	lead_info, err := serv.lead_serv.FetchLeadByLeadId(lead_id)
+	return lead_info, err
 }

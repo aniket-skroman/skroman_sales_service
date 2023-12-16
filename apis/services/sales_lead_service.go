@@ -450,6 +450,7 @@ func (ser *sale_service) recover_ser() {
 func (ser *sale_service) Fetch_users_data(user_id string) (interface{}, error) {
 	defer ser.recover_ser()
 	token := ser.jwt_service.GenerateTempToken(user_id, "EMP", "SALES")
+
 	api_resquest := proxycalls.NewAPIRequest("fetch-user", "GET", false, nil, nil, map[string]string{
 		"Authorization": token,
 	})

@@ -17,7 +17,7 @@ var (
 
 func LeadVisitRouter(router *gin.Engine, db *apis.Store) {
 	visit_repo = repositories.NewLeadVisitRepository(db)
-	visit_serv = services.NewLeadVisitService(visit_repo, sales_service)
+	visit_serv = services.NewLeadVisitService(visit_repo, sales_service, jwt_servive)
 	visit_cont = controller.NewLeadVisitService(visit_serv)
 
 	lead_visit := router.Group("/api", middleware.AuthorizeJWT(jwt_servive))

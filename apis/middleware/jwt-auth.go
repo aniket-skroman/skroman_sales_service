@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/aniket-skroman/skroman_sales_service.git/apis/helper"
 	"github.com/aniket-skroman/skroman_sales_service.git/apis/services"
 	"github.com/aniket-skroman/skroman_sales_service.git/utils"
 	"github.com/dgrijalva/jwt-go"
@@ -38,8 +37,11 @@ func AuthorizeJWT(jwtService services.JWTService) gin.HandlerFunc {
 
 		if token.Valid {
 			claims := token.Claims.(jwt.MapClaims)
-			utils.TOKEN_ID, _ = helper.DecryptData(fmt.Sprintf("%v", claims["user_id"]))
-			utils.USER_TYPE, _ = helper.DecryptData(fmt.Sprintf("%v", claims["user_type"]))
+			utils.TOKEN_ID = fmt.Sprintf("%v", claims["user_id"])
+			utils.USER_TYPE = fmt.Sprintf("%v", claims["user_type"])
+
+			//utils.TOKEN_ID, _ = helper.DecryptData(fmt.Sprintf("%v", claims["user_id"]))
+			//utils.USER_TYPE, _ = helper.DecryptData(fmt.Sprintf("%v", claims["user_type"]))
 		}
 
 	}
